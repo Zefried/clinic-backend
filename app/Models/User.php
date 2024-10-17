@@ -60,5 +60,9 @@ class User extends Authenticatable
         return $this->hasOne(Doctors_userData::class, 'user_id');
     }
 
+    public function labAccount() {
+        return $this->hasOne(LabModel::class, 'user_id');
+    }
+
 
 }

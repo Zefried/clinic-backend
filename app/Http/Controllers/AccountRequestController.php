@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Doctors_userData;
 use App\Models\User;
 use Exception;
-use function PHPSTORM_META\map;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 

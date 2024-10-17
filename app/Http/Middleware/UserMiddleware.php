@@ -17,13 +17,14 @@ class UserMiddleware
     {
         $user = $request->user();
 
-        if (!$user || $user->role !== 'user') {
+        if (!$user || !in_array($user->role, ['user', 'admin'])) {
             return response()->json([
                 'status' => 403,
-                'message' => !$user ? 'User not found or not authenticated' : 'Unauthorized Access: Admins only',
+                'message' => !$user ? 'User not found or not authenticated' : 'Unauthorized Access: User or Admin only',
             ], 403);
         }
 
         return $next($request);
     }
+
 }
