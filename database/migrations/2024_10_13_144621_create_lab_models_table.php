@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('state')->nullable();
             $table->string('lab_account_request')->nullable()->default(false);
             $table->string('lab_unique_id')->nullable();
+            $table->string('disable_status')->nullable()->default(false);
             
             // Adding indexes
             $table->index('phone');            

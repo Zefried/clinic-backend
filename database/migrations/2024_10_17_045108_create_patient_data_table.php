@@ -30,7 +30,7 @@ return new class extends Migration
             $table->string('request_status')->nullable()->default(false);
             $table->string('associated_user_email')->nullable();
             $table->string('associated_user_id')->nullable();
-            $table->boolean('disable')->nullable()->default(false);
+            $table->string('disable_status')->nullable()->default(false);
 
             // Adding indexes
             $table->index('phone');

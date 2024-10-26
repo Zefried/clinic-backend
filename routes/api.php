@@ -3,7 +3,10 @@
 use App\Http\Controllers\AccountRequestController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\FakeDataController;
 use App\Http\Controllers\LabController;
+use App\Http\Controllers\LabMasterController\TestCategoryController;
+use App\Http\Controllers\LabMasterController\TestController;
 use App\Http\Controllers\patientController\PatientRegRequestController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\SimpleAuthController;
@@ -52,6 +55,12 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function(){
     Route::get('/admin/fetch-doctorCred/{Id}', [RegisterController::class, 'fetchDoctorsCred']);
     Route::post('/admin/change-doctorPsw/{Id}', [RegisterController::class, 'changeDocPsw']);
     Route::post('/admin/update-doctor/{Id}', [RegisterController::class, 'updateDoctorData']);
+    Route::get('/admin/disable-doctor/{Id}', [RegisterController::class, 'disableDoctorData']);
+    Route::get('/admin/search-users', [RegisterController::class, 'autoSearchUser']);
+        // Route for autoSearch doc and workers account 
+        
+
+    // ends here    
 
 
     // Route for doctor and pharmacist request applications 
@@ -63,19 +72,35 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function(){
     Route::post('/admin/add-lab', [LabController::class, 'addLab']);
     Route::get('/admin/fetch-lab-account-data', [LabController::class, 'fetchLabData']);
     Route::get('/admin/fetch-lab-single-account-data/{id}', [LabController::class, 'fetchSingleLabData']);
-    Route::get('/admin/auto-search', [LabController::class, 'autoSearch']);
+    Route::get('/admin/lab-search', [LabController::class, 'labSearch']);
+    Route::get('/admin/disable-lab/{Id}', [LabController::class, 'disableLabData']);
 
 
+    // Route for admin searching pending patient against specific doctor or pharmacist 
     Route::get('/admin/auto-search-user', [PatientRegRequestController::class, 'autoSearchUser']);
     Route::post('/admin/fetch-all-patient/', [PatientRegRequestController::class, 'fetchingAllPatient']);
     Route::post('/admin/fetch-all-pending-patient/', [PatientRegRequestController::class, 'fetchingUserSpecificPatient']);
-   
+    
+    // Route for admin adding diagnostic test master 
+    Route::post('/admin/add-test-category', [TestCategoryController::class, 'addTestCategory']);
+    Route::post('/admin/add-lab-test', [TestController::class, 'addTest']);
+    Route::get('/admin/fetch-test-category', [TestCategoryController::class, 'fetchTestCategory']);
+    Route::get('/admin/fetch-test/{id}', [TestController::class, 'fetchTestWithId']);
+    Route::get('/admin/edit-test-category/{id}', [TestCategoryController::class, 'editTestCategory']);
+    Route::post('/admin/update-test-category/{id}', [TestCategoryController::class, 'updateTestCategory']);
+    Route::get('/admin/edit-lab-test/{id}', [TestController::class, 'editLabTest']);
+    Route::post('/admin/update-lab-test/{id}', [TestController::class, 'updateLabTest']);
+
+
+    Route::get('/admin/testPagi', [FakeDataController::class, 'fetchUsers']);
+
+
  
 });
 
 
 // - // working with User protected routes // - //
-Route::middleware(['auth:sanctum', UserMiddleware::class, AdminMiddleware::class])->group(function(){
+Route::middleware(['auth:sanctum', UserMiddleware::class])->group(function(){
 
     // Route for Patient registration request 
     Route::post('/user/add-patient-request', [PatientRegRequestController::class, 'addPatientRequest']);

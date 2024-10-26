@@ -17,7 +17,8 @@ class UserMiddleware
     {
         $user = $request->user();
 
-        if (!$user || !in_array($user->role, ['user', 'admin'])) {
+        // Check if the user is not authenticated or doesn't have the 'user' role
+        if (!$user || $user->role !== 'user') {
             return response()->json([
                 'status' => 403,
                 'message' => !$user ? 'User not found or not authenticated' : 'Unauthorized Access: User or Admin only',

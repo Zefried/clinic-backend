@@ -21,6 +21,7 @@ class LabModel extends Model
         'state',
         'lab_account_request',
         'lab_unique_id',
+        'disable_status',
     ];
 
     // Relationship: LabModel belongs to a user

@@ -91,34 +91,43 @@ class AccountRequestController extends Controller
         
     }   
 
-    public function fetchPendingAccounts(){
-
-            try{
-                $doctorsData = Doctors_userData::where('account_request', 'pending')->get();
+    public function fetchPendingAccounts(Request $request) {
+        try {
+        
+            $recordsPerPage = $request->query('recordsPerPage', 10);
     
-                if ($doctorsData->isEmpty()) {
-                    return response()->json([
-                        'status' => 204,
-                        'message' => 'No user found',
-                    ]);
-                }
+     
+            $doctorsData = Doctors_userData::where('account_request', 'pending')
+                ->paginate($recordsPerPage);
     
+       
+            if ($doctorsData->isEmpty()) {
                 return response()->json([
-                    'status' => 200,
-                    'doc_data' => $doctorsData,
-                    'message' => 'Total user data found: ' . $doctorsData->count(),
-                ]);
-    
-            }catch(Exception $e){
-    
-                return response()->json([
-                    'error' => $e->getMessage(),
-                    'status' => 500,
-                    'message' => 'failed to fetch user data',
+                    'status' => 204,
+                    'message' => 'No pending accounts found',
                 ]);
             }
-           
+    
+            return response()->json([
+                'status' => 200,
+                'listData' => $doctorsData->items(), 
+                'message' => 'Total pending accounts found: ' . $doctorsData->total(),
+                'total' => $doctorsData->total(), 
+                'current_page' => $doctorsData->currentPage(),
+                'last_page' => $doctorsData->lastPage(), 
+                'per_page' => $doctorsData->perPage(), 
+            ]);
+    
+        } catch (Exception $e) {
+            // Handle the exception and return an error response
+            return response()->json([
+                'error' => $e->getMessage(),
+                'status' => 500,
+                'message' => 'Failed to fetch pending accounts',
+            ]);
+        }
     }
+    
 
     public function updatePendingAccountInfo($id, Request $request){
         $validator = Validator::make($request->all(), [

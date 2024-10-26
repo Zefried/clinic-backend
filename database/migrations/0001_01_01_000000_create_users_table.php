@@ -26,9 +26,11 @@ return new class extends Migration
             $table->string('password')->nullable();
             $table->string('pswCred')->nullable();
             $table->string('role')->nullable();
+            $table->string('disable_status')->nullable()->default(false);
 
             // Adding indexes for performance 
             $table->index('email');
+            $table->index('name');
             $table->index('phone');
             $table->index('unique_user_id');
 

@@ -31,6 +31,7 @@ class Doctors_userData extends Model
         'state',
         'designation',
         'unique_user_id',
+        'disable_status',
     ];
 
     public function user(){

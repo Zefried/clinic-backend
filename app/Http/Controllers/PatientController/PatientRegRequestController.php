@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\patientController;
+
 use App\Http\Controllers\Controller; 
 use App\Models\PatientData;
 use App\Models\User;

@@ -27,7 +27,7 @@ class PatientData extends Model
         'request_status', 
         'associated_user_email', 
         'associated_user_id',
-        'disable',
+        'disable_status',
     ];
     
 }

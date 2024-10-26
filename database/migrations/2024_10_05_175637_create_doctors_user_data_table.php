@@ -13,13 +13,13 @@ return new class extends Migration
     {
         Schema::create('doctors_user_data', function (Blueprint $table) {
             $table->id();
-            
-            // Fields specific to doctor data
-            $table->string('name')->nullable(); // Doctor's name
+         
+            // Fields specific to doctor & SS worker data
+            $table->string('name')->nullable(); 
             $table->unsignedBigInteger('user_id')->nullable(); // foreign id
-            $table->integer('age')->nullable(); // Doctor's age
+            $table->integer('age')->nullable(); 
             $table->string('user_type')->nullable();
-            $table->string('sex')->nullable(); // Doctor's sex
+            $table->string('sex')->nullable();
             $table->string('relativeName')->nullable(); // Relative name (Father, Mother, Spouse)
             $table->bigInteger('phone')->unique()->nullable(); // Phone number
             $table->string('email')->unique()->nullable(); // Email (unique)
@@ -36,11 +36,15 @@ return new class extends Migration
             $table->string('designation')->nullable(); // Default designation is 'doctor'
             $table->string('unique_user_id')->unique()->nullable(); // Unique user ID
             $table->string('account_request')->nullable()->default(false); // Default designation is 'doctor'
-            
+            $table->string('disable_status')->nullable()->default(false); // Default status is 'false'
+
+
             // Adding indexes for performance
             $table->index('email'); // Index for email
+            $table->index('name'); // Index for name
             $table->index('phone'); // Index for phone
             $table->index('unique_user_id'); // Index for unique_user_id
+            $table->index('workDistrict'); // Index for work district
             
             // Foreign key constraint
             $table->foreign('user_id')->references('id')->on('users');

@@ -16,6 +16,7 @@ class RegisterController extends Controller
     //this function is registering both doctor and pharma (future reference)
     public function adminDoctorRegistration(request $request){
         
+        
         DB::beginTransaction(); 
 
         $validator = Validator::make($request->all(), [
@@ -24,8 +25,8 @@ class RegisterController extends Controller
             // 'age' => 'required|integer',
             // 'sex' => 'required|string',
             // 'relativeName' => 'required|string',
-            // 'phone' => 'required|numeric|digits_between:10,15',  
-            // 'email' => 'required|email|', 
+            'phone' => 'required|numeric|digits_between:10,15',  
+            'email' => 'required|email|unique:users,email',
             // 'registrationNo' => 'required|string',
             // 'village' => 'required|string',
             // 'po' => 'required|string',  // Post Office
@@ -34,7 +35,7 @@ class RegisterController extends Controller
             // 'district' => 'required|string',
             // 'buildingNo' => 'required|string',
             // 'landmark' => 'required|string',
-            // 'workDistrict' => 'required|string',
+            'workDistrict' => 'required|string',
             // 'state' => 'required|string',
         ]);
 
@@ -104,35 +105,49 @@ class RegisterController extends Controller
             
     }
 
-    public function fetchDoctors(){
-        try{
-            $doctorsData = Doctors_userData::where('account_request', '!=', 'pending')->get();
-
+    public function fetchDoctors(Request $request) {
+        try {
+           
+            $recordsPerPage = $request->query('recordsPerPage', 10);
+    
+            // Fetch paginated data from the model
+            $doctorsData = Doctors_userData::where('account_request', '!=', 'pending')
+                ->where('disable_status', '!=', '1')
+                ->paginate($recordsPerPage);
+    
             if ($doctorsData->isEmpty()) {
                 return response()->json([
                     'status' => 204,
                     'message' => 'No user found',
                 ]);
             }
-
+    
             return response()->json([
                 'status' => 200,
-                'doc_data' => $doctorsData,
-                'message' => 'Total user data found: ' . $doctorsData->count(),
+                'listData' => $doctorsData->items(), // Return the paginated items
+                'message' => 'Total user data found: ' . $doctorsData->total(), // Use total count
+                'total' => $doctorsData->total(),
+                'current_page' => $doctorsData->currentPage(),
+                'last_page' => $doctorsData->lastPage(),
+                'per_page' => $doctorsData->perPage(),
             ]);
-
-        }catch(Exception $e){
-
+    
+        } catch (Exception $e) {
             return response()->json([
                 'error' => $e->getMessage(),
                 'status' => 500,
-                'message' => 'failed to fetch user data',
+                'message' => 'Failed to fetch user data',
             ]);
         }
-       
     }
+    
 
-    public function fetchSingeDoctor($id){
+    public function fetchSingeDoctor($id, request $request){
+
+        // $user = $request->user();
+
+        // return response()->json($user);
+
         try{
             $doctorsData = Doctors_userData::where('id', $id)->get();
 
@@ -241,6 +256,7 @@ class RegisterController extends Controller
             $userAccountData = Doctors_userData::find($request->id);
 
             $userAccountData->update([
+                // not updating email since its in 2 different tables - not imp
                     'name' => $request->input('name'),
                     'age' => $request->input('age'),
                     'phone' => $request->input('phone'),
@@ -267,6 +283,8 @@ class RegisterController extends Controller
 
             
             if($userAccountData){
+
+                // not updating email since its in 2 different tables - not imp
             
                 $user =  User::where('id', $request->user_id)->first();
             
@@ -296,6 +314,98 @@ class RegisterController extends Controller
         
 
     
+    }
+    
+    public function disableDoctorData($id) {
+        DB::beginTransaction();
+    
+        try {
+            $docWorkData = Doctors_userData::find($id);
+    
+            // Check if the doctor data exists
+            if (!$docWorkData) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'Doctor data not found'
+                ]);
+            }
+    
+            // Update the doctor's disable status
+            $docDataUpdated = $docWorkData->update([
+                'disable_status' => 1,
+            ]);
+    
+            // Check if the doctor data update was successful
+            if ($docDataUpdated) {
+                // Fetch the associated user data
+                $userData = User::where('id', $docWorkData->user_id);
+    
+                // Update the user's disable status
+                $updated = $userData->update([
+                    'disable_status' => 1,
+                ]);
+    
+                // Check if the user data update was successful
+                if ($updated) {
+                    DB::commit();
+                    return response()->json([
+                        'status' => 200,
+                        'message' => 'Item disabled successfully'
+                    ]);
+                } else {
+                    // If the user update fails, roll back and return error
+                    DB::rollBack();
+                    return response()->json([
+                        'status' => 500,
+                        'message' => 'Failed to update user disable status'
+                    ]);
+                }
+            } else {
+                // If the doctor data update fails, roll back and return error
+                DB::rollBack();
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Failed to update doctor disable status'
+                ]);
+            }
+    
+        } catch (Exception $e) {
+            // Rollback transaction and return error on exception
+            DB::rollBack();
+            return response()->json([
+                'status' => 500,
+                'message' => 'Fatal error',
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+    
+
+
+    // this function is being used to find doctor or work based on email, name, phone, location
+
+    public function autoSearchUser(request $request){
+  
+        $query = $request->input('query');
+        
+   
+        if (empty($query)) {
+            return response()->json(['suggestions' => []]);
+        }
+
+
+        $suggestions = Doctors_userData::where('disable_status', '!=', '1')
+        ->where(function($subQuery) use ($request) {
+            $searchQuery = $request->input('query');
+            $subQuery->where('phone', 'like', '%' . $searchQuery . '%')
+                    ->orWhere('email', 'like', '%' . $searchQuery . '%')
+                    ->orWhere('name', 'like', '%' . $searchQuery . '%')
+                    ->orWhere('workDistrict', 'like', '%' . $searchQuery . '%');
+        })
+        ->take(10) 
+        ->get(['phone', 'email', 'name', 'workDistrict', 'id']);
+
+        return response()->json(['suggestions' => $suggestions]);
     }
     
 
