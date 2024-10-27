@@ -29,4 +29,10 @@ class LabModel extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    // Relationship: LabModel has many employees
+    public function employees()
+    {
+          return $this->hasMany(Employee::class, 'lab_id');
+    }
 }

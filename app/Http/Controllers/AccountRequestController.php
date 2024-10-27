@@ -180,6 +180,7 @@ class AccountRequestController extends Controller
             ]);
         }
     }
+    
 
     public function acceptPendingAccount(Request $request)
     {

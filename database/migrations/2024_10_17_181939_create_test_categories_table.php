@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name')->nullable()->index(); 
             $table->text('description')->nullable(); 
             $table->string('status')->nullable()->default(true)->index(); 
+            $table->string('disable_status')->nullable()->default(false); 
             $table->timestamps(); 
         });
     }

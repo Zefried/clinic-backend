@@ -38,12 +38,12 @@ class LabController extends Controller
             $labUserData = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
-                'user_type' => 'lab',
+                'user_type' =>  $request->input('profession'),
                 'phone' => $request->phone,
                 'unique_user_id' => $this->generateUniqueUserId(),
                 'password' => $request->password,
                 'pswCred' => $request->pswCred,
-                'role' => 'lab',
+                'role' =>  $request->input('profession'),
             ]);
 
             if($labUserData){
@@ -67,7 +67,7 @@ class LabController extends Controller
 
                 return response()->json([
                     'status' => 201,
-                    'message' => 'Lab account created successfully',
+                    'message' => 'Account created successfully',
                     'lab_data' => $labModelData,
                 ]);
             }
@@ -75,7 +75,7 @@ class LabController extends Controller
 
             return response()->json([
                 'status' => 403,
-                'message' => 'Oops, failed to create a lab account, provide correct information',
+                'message' => 'Oops, failed to create an account, provide correct information',
             ]); 
 
         
@@ -112,7 +112,7 @@ class LabController extends Controller
             return response()->json([
                 'status' => 200,
                 'listData' => $labAccountData->items(), // Paginated items
-                'message' => 'Total lab data found: ' . $labAccountData->total(),
+                'message' => 'Total account data found: ' . $labAccountData->total(),
                 'total' => $labAccountData->total(),
                 'current_page' => $labAccountData->currentPage(),
                 'last_page' => $labAccountData->lastPage(),
@@ -123,7 +123,7 @@ class LabController extends Controller
             // Handle exceptions with a 500 status
             return response()->json([
                 'status' => 500,
-                'message' => 'Failed to fetch lab data. Please check the console for errors.',
+                'message' => 'Failed to fetch account data. Please check the console for errors.',
                 'error' => $e->getMessage(),
             ]);
         }
@@ -138,8 +138,8 @@ class LabController extends Controller
            
             return response()->json([
                 'status' => 200,
-                'message' => 'Total Lab data found: ' . $labAccountData->count(),
-                'lab_account_data' => $labAccountData,
+                'message' => 'Total account data found: ' . $labAccountData->count(),
+                'listData' => $labAccountData,
             ]);
 
         }catch(Exception $e){
@@ -152,6 +152,70 @@ class LabController extends Controller
        
        
     }
+
+
+
+
+    public function updateLabUser($id, Request $request) {
+        // Validate the request
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string',
+            'registrationNo' => 'required|string',
+            'buildingNo' => 'required|string',
+            'district' => 'required|string',
+            'landmark' => 'required|string',
+            'state' => 'required|string',
+            'phone' => 'nullable|string', // Phone is optional
+        ]);
+    
+        if ($validator->fails()) {
+            return response()->json(['validation_error' => $validator->messages()]);
+        }
+    
+        DB::beginTransaction();
+    
+        try {
+            // Get the lab account data
+            $accountData = LabModel::where('id', $id)->first();
+    
+            // Prepare update data for LabModel
+            $updateAccountData = $accountData->update([
+                'name' => $request->input('name'),
+                'registrationNo' => $request->input('registrationNo'),
+                'buildingNo' => $request->input('buildingNo'),
+                'district' => $request->input('district'),
+                'landmark' => $request->input('landmark'),
+                'state' => $request->input('state'),
+            ]);
+    
+            if ($updateAccountData) {
+                // Find the associated user account
+                $userAccount = User::where('id', $accountData->user_id)->first();
+    
+                // Update user account details
+                $userAccount->update([
+                    'name' => $request->input('name'),
+                ]);
+            }
+    
+            DB::commit();
+    
+            return response()->json([
+                'status' => 200,
+                'message' => 'User and Lab details updated successfully',
+            ]);
+    
+        } catch (Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'status' => 500,
+                'message' => 'Fatal Error during update',
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+    
+    
 
 
     public function disableLabData($id) {
@@ -195,7 +259,7 @@ class LabController extends Controller
                     DB::rollBack();
                     return response()->json([
                         'status' => 500,
-                        'message' => 'Failed to update user disable status'
+                        'message' => 'Failed to update account disable status'
                     ]);
                 }
             } else {
@@ -203,7 +267,7 @@ class LabController extends Controller
                 DB::rollBack();
                 return response()->json([
                     'status' => 500,
-                    'message' => 'Failed to update lab disable status'
+                    'message' => 'Failed to update account disable status'
                 ]);
             }
     
@@ -219,11 +283,45 @@ class LabController extends Controller
     }
     
 
+    public function changeLabPsw($id, Request $request){
+
+        try {
+                $newPsw = User::where('id', $id)->update([
+                    'password' => bcrypt($request->input('pswCred')),
+                    'pswCred' => $request->input('pswCred'),
+                ]); //
+
+                if($newPsw){
+                    return response()->json([
+                        'status' => 200,
+                        'success' => true,
+                        'message' => 'Password updated successfully'
+                    ]);
+                }else{
+                    return response()->json([
+                        'status' => 404,
+                        'success' => false,
+                        'message' => 'User not found'
+                    ]);
+                }
+    
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Error updating password, Contact developer',
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+       
+       
+    }
+
 
     // helper functions space 
     private function generateUniqueUserId() {
         do {
-            $uniqueUserId = 'LAB-' . strtoupper(uniqid()); // Generating a new unique ID
+            $uniqueUserId = 'Acc-' . strtoupper(uniqid()); // Generating a new unique ID
         } while (User::where('unique_user_id', $uniqueUserId)->exists()); // Checking for uniqueness
         
         return $uniqueUserId; 
