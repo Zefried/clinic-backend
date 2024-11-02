@@ -1,12 +1,12 @@
 <?php
 
 use App\Http\Controllers\AccountRequestController;
-use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EmployeeController\EmployeeController;
 use App\Http\Controllers\LabController;
 use App\Http\Controllers\LabMasterController\TestCategoryController;
 use App\Http\Controllers\LabMasterController\TestController;
+use App\Http\Controllers\LabTestController\InsertTestInLab;
 use App\Http\Controllers\patientController\PatientRegRequestController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\SimpleAuthController;
@@ -135,9 +135,19 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function(){
 
     
     ///////// Ends here
-    
-  
 
+
+
+
+
+
+    ///////// Inserting test in lab, flow - Routes starts here
+
+            //////// Inserting tests 
+            Route::post('/admin/insert-test-in-lab', [InsertTestInLab::class, 'insertLabTest']);
+            Route::get('/admin/view-assigned-categories/{id}', [InsertTestInLab::class, 'ViewAssignedCategories']);
+            Route::post('/admin/view-assigned-test/', [InsertTestInLab::class, 'ViewAssignedTest']);
+    ///////// Ends here
 
 
 });
