@@ -8,60 +8,84 @@ use App\Models\LabTest;
 use App\Models\LabTestCategory;
 use App\Models\Test;
 use App\Models\TestCategory;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class InsertTestInLab extends Controller
 {
     public function insertLabTest(request $request){
 
-        $labId = $request->lab_id;
-        $categoryId = isset($request->categoryData['id']) ? $request->categoryData['id'] : null;
+        try{
 
-       
-        $lab = LabModel::where('id', $labId)->get();
-        $labNames = [];
+            DB::beginTransaction();
 
-        foreach ($lab as $labData) {
-            $labNames[] = $labData->name;
-        }
-
-
-        if ($lab) {
-
-            $labTestCategory = LabTestCategory::firstOrCreate(
-                [
-                    'test_category_id' => $categoryId,
-                    'lab_id' => $labId
-                ],
-                [
-                    'lab_name' => implode(',', $labNames)
-                ]
-            );
-            
-
-            if ($labTestCategory) {
-              
-                $responses = [];
-
-               foreach ($request->test as $test) {
-                $xAll = LabTest::firstOrCreate(
+            $labId = $request->lab_id;
+            $categoryId = isset($request->categoryData['id']) ? $request->categoryData['id'] : null;
+    
+           
+            $lab = LabModel::where('id', $labId)->get();
+            $labNames = [];
+    
+            foreach ($lab as $labData) {
+                $labNames[] = $labData->name;
+            }
+    
+    
+            if ($lab) {
+    
+                $labTestCategory = LabTestCategory::firstOrCreate(
                     [
-                        'lab_test_id' => $test['id'],  // Check if lab_test_id already exists
+                        'test_category_id' => $categoryId,
                         'lab_id' => $labId
                     ],
                     [
-                        'lab_test_category_id' => $labTestCategory->id,
-                        'lab_name' => implode(',', $labNames),
-                        'lab_test_name' => $test['name'],
+                        'lab_name' => implode(',', $labNames)
                     ]
                 );
+                
+    
+                if ($labTestCategory) {
+                  
+                    $responses = [];
+    
+                   foreach ($request->test as $test) {
+                    $data = LabTest::firstOrCreate(
+                        [
+                            'lab_test_id' => $test['id'],  // Check if lab_test_id already exists
+                            'lab_id' => $labId
+                        ],
+                        [
+                            'lab_test_category_id' => $labTestCategory->test_category_id,
+                            'lab_name' => implode(',', $labNames),
+                            'lab_test_name' => $test['name'],
+                        ]
+                    );
+    
+                    $responses[] = $data;
+                    }
 
-                $responses[] = $xAll;
+                    DB::commit();
+    
+                    return response()->json([
+                        'status' => 200,
+                        'message' => 'Data Inserted Successfully',
+                        'test_data' => $responses
+                    ]);
                 }
-
-                return response()->json($responses);
             }
+
+
+        }catch(Exception $e){
+            DB::rollBack();
+            return response()->json([
+                'status' => 500,
+                'message' => 'Fatal Error',
+                'error' => $e->getMessage(),
+            ]);
         }
+
+        
 
 
     }
@@ -94,18 +118,19 @@ class InsertTestInLab extends Controller
 
 
     public function ViewAssignedTest(Request $request) {
-    
+
+
         try {
 
             // Fetch all test IDs associated with the lab and category
             $testIds = LabTest::where('lab_id', $request->payLoad['lab_id'])
             ->where('lab_test_category_id',$request->payLoad['category_id'])
-            ->pluck('id');
+            ->pluck('lab_test_id');
+
                   
             // Fetch actual tests using the test IDs
             $tests = Test::whereIn('id', $testIds)->get();
-            return response()->json($tests);  
-    
+           
             // Success Response
             return response()->json([
                 'status' => 200,
@@ -124,6 +149,7 @@ class InsertTestInLab extends Controller
 
 
     public function ViewAllTestOfLab($id, Request $request) {
+
         $recordsPerPage = $request->query('recordsPerPage', 10);
     
         // Collecting all test IDs & category IDs associated with the lab
@@ -144,6 +170,7 @@ class InsertTestInLab extends Controller
 
         // Fetching test category data
         $testCategory = TestCategory::whereIn('id', $categoryIds)->get(['id', 'name']);
+
         
         // Getting the lab name
         $labName = LabModel::where('id', $id)->pluck('name')->first();
@@ -162,15 +189,61 @@ class InsertTestInLab extends Controller
                 'categories' => $testCategory
             ]
         ]);
+
+    }
+
+
+    public function searchTestOfLab(Request $request)
+    {
+        $query = $request->input('query');
         
+        if (empty($query)) {
+            return response()->json(['suggestions' => []]);
+        }
+
+        $suggestions = LabTest::where('disable_status', '!=', '1')
+            ->where(function($subQuery) use ($query) {
+                $subQuery->where('lab_test_name', 'like', '%' . $query . '%')
+                ->orWhere('lab_name', 'like', '%' . $query . '%');
+            })
+            ->take(10)
+            ->get(['lab_test_name', 'lab_name', 'lab_test_id']);
+
+        return response()->json(['suggestions' => $suggestions]);
     }
 
     
+    public function RemoveLabTest(Request $request)
+    {
+        // Retrieve the lab test row by 'lab_test_id' from the request
+        $labTestRow = LabTest::where('lab_test_id', $request->id)->first();
 
-    public function RemoveLabTest(Request $request){
-       
+        // Check if the lab test row exists
+        if (!$labTestRow) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Lab test not found'
+            ]);
+        }
+
+        // Attempt to delete the row and check the result
+        $delete = $labTestRow->delete();
+
+        if ($delete) {
+            return response()->json([
+                'status' => 200,
+                'message' => 'Item removed successfully'
+            ]);
+        } else {
+            // If deletion fails for some reason, return an error response
+            return response()->json([
+                'status' => 500,
+                'message' => 'Failed to remove item'
+            ]);
+        }
     }
-    
+
+
     
     
 }

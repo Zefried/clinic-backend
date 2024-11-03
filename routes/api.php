@@ -146,13 +146,17 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function(){
             //////// Inserting tests 
             Route::post('/admin/insert-test-in-lab', [InsertTestInLab::class, 'insertLabTest']);
             Route::get('/admin/view-assigned-categories/{id}', [InsertTestInLab::class, 'ViewAssignedCategories']);
-            Route::post('/admin/view-assigned-test/', [InsertTestInLab::class, 'ViewAssignedTest']);
+           
 
             ///////// View Tests 
+            Route::post('/admin/view-assigned-test/', [InsertTestInLab::class, 'ViewAssignedTest']);
             Route::get('/admin/view-all-test-lab/{id}', [InsertTestInLab::class, 'ViewAllTestOfLab']);
 
             //////// Removing tests 
             Route::post('/admin/remove-lab-test/', [InsertTestInLab::class, 'RemoveLabTest']);
+
+            ///////// Search Test 
+            Route::get('/admin/search-test-lab/{id}', [InsertTestInLab::class, 'searchTestOfLab']);
 
 
 
