@@ -66,6 +66,7 @@ class InsertTestInLab extends Controller
 
     }
 
+
     public function ViewAssignedCategories($id) {
         try {
 
@@ -91,12 +92,11 @@ class InsertTestInLab extends Controller
         }
     }
 
+
     public function ViewAssignedTest(Request $request) {
     
         try {
 
-
-      
             // Fetch all test IDs associated with the lab and category
             $testIds = LabTest::where('lab_id', $request->payLoad['lab_id'])
             ->where('lab_test_category_id',$request->payLoad['category_id'])
@@ -120,6 +120,55 @@ class InsertTestInLab extends Controller
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+
+    public function ViewAllTestOfLab($id, Request $request) {
+        $recordsPerPage = $request->query('recordsPerPage', 10);
+    
+        // Collecting all test IDs & category IDs associated with the lab
+        $labTestData = LabTest::where('lab_id', $id)->get(['lab_test_id', 'lab_test_category_id']);
+        
+        
+        // Collecting all test IDs to fetch test data from the test table
+        $testIds = $labTestData->pluck('lab_test_id')->toArray(); 
+        // Collecting all test category IDs to fetch category data from the test category table
+        $categoryIds = $labTestData->pluck('lab_test_category_id')->toArray(); 
+
+
+        // Fetching test data using the collected test IDs and paginating the results
+        $testData = Test::whereIn('id', $testIds)
+            ->select('id', 'name')  // Selecting only the necessary columns
+            ->paginate($recordsPerPage);  // Paginating the results
+        
+
+        // Fetching test category data
+        $testCategory = TestCategory::whereIn('id', $categoryIds)->get(['id', 'name']);
+        
+        // Getting the lab name
+        $labName = LabModel::where('id', $id)->pluck('name')->first();
+    
+         return response()->json([
+            'status' => 200,
+            'data' => [
+                'lab_name' => $labName,
+                'tests' => $testData->items(),  // Only the items for this page
+                'pagination' => [
+                    'total' => $testData->total(),
+                    'current_page' => $testData->currentPage(),
+                    'last_page' => $testData->lastPage(),
+                    'per_page' => $testData->perPage(),
+                ],
+                'categories' => $testCategory
+            ]
+        ]);
+        
+    }
+
+    
+
+    public function RemoveLabTest(Request $request){
+       
     }
     
     
