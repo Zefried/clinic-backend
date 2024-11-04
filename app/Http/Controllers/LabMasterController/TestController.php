@@ -9,6 +9,8 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
+use function PHPSTORM_META\map;
+
 class TestController extends Controller
 {
 
@@ -55,35 +57,42 @@ class TestController extends Controller
 
     }
 
-    public function fetchTestWithId($id){
-        $testData = TestCategory::where('id', $id)->With('tests')->where('status', '!=', '0')->get();
+    public function fetchTestWithId($id, Request $request){
 
-        try{
+        try {
+        $recordsPerPage = $request->query('recordsPerPage', 10);
 
-            if($testData){
-                return response()->json([
-                    'status' => 200,
-                    'message' => 'Total test found ' . $testData->count(),
-                    'test_data' => $testData,
-        
-                ]);
-            } else {
-                return response()->json([
-                    'status' => 403,
-                    'message' => 'something went wrong please try again',
-                ]);
-            }
+        // Fetch paginated data from the model
+        $testData = TestCategory::where('id', $id)
+            ->with('tests')
+            ->where('status', '!=', '0')
+            ->paginate($recordsPerPage);
 
-        }catch(Exception $e){
+        if ($testData->isNotEmpty()) {
+            return response()->json([
+                'status' => 200,
+                'message' => 'Total test found: ' . $testData->total(),
+                'test_data' => $testData->items(), // Return the paginated items
+                'total' => $testData->total(),
+                'current_page' => $testData->currentPage(),
+                'last_page' => $testData->lastPage(),
+                'per_page' => $testData->perPage(),
+            ]);
+        } else {
+            return response()->json([
+                'status' => 204,
+                'message' => 'No tests found',
+            ]);
+        }
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => 500,
-                'message' => 'fatal error',
+                'message' => 'Fatal error',
                 'error' => $e->getMessage(),
             ]);
         }
-        
-      
     }
+
 
     public function editLabTest($id){
         try{
@@ -142,6 +151,34 @@ class TestController extends Controller
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    public function searchLabTest(Request $request) {
+        try{
+
+            $query = $request->input('query');
+        
+            if (empty($query)) {
+                return response()->json(['results' => []]);
+            }
+        
+            $results = Test::where('disable_status', '!=', '1')
+                        ->where('name', 'like', '%' . $query . '%')
+                        ->take(10)
+                        ->get(['id', 'name']);
+        
+            return response()->json([
+                'suggestions' => $results
+            ]);
+
+        }catch(Exception $e){
+            return response()->json([
+                'status' => 200,
+                'message' => 'fetal error',
+                'error' => $e->getMessage(),
+            ]);
+        }
+        
     }
     
 }

@@ -58,8 +58,7 @@ class TestCategoryController extends Controller
        
     }
 
-    public function fetchTestCategory(Request $request)
-    {
+    public function fetchTestCategory(Request $request){
         try {
             $recordsPerPage = $request->query('recordsPerPage', 10);
     

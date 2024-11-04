@@ -128,6 +128,9 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function(){
             Route::get('/admin/edit-lab-test/{id}', [TestController::class, 'editLabTest']);
             Route::post('/admin/update-lab-test/{id}', [TestController::class, 'updateLabTest']);
 
+                /////// Search for lab test api
+                Route::get('/admin/search-lab-test', [TestController::class, 'searchLabTest']);
+
             // Route for admin adding employee against labs
             Route::post('/admin/add-employee/{id}', [EmployeeController::class, 'addEmployeeAgainstLab']);
             Route::get('/admin/fetch-lab-employee', [EmployeeController::class, 'fetchEmployee']);
