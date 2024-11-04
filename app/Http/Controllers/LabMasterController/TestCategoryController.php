@@ -58,33 +58,40 @@ class TestCategoryController extends Controller
        
     }
 
-    public function fetchTestCategory(){
-
-        try{
-            $testCategoryData = TestCategory::where('status', '!=', '0')->get(['id', 'name']);
-            if($testCategoryData){
+    public function fetchTestCategory(Request $request)
+    {
+        try {
+            $recordsPerPage = $request->query('recordsPerPage', 10);
+    
+            // Fetch paginated data from the model
+            $testCategoryData = TestCategory::where('status', '!=', '0')
+                ->paginate($recordsPerPage, ['id', 'name']);
+    
+            if ($testCategoryData->isNotEmpty()) {
                 return response()->json([
                     'status' => 200,
-                    'message' => 'Total Test Category Found ' .  $testCategoryData->count(),
-                    'test_category_data' => $testCategoryData,
+                    'message' => 'Total Test Category Found: ' . $testCategoryData->total(),
+                    'test_category_data' => $testCategoryData->items(), // Return the paginated items
+                    'total' => $testCategoryData->total(),
+                    'current_page' => $testCategoryData->currentPage(),
+                    'last_page' => $testCategoryData->lastPage(),
+                    'per_page' => $testCategoryData->perPage(),
                 ]);
-            }else{
+            } else {
                 return response()->json([
-                    'status' => 403,
-                    'message' => 'Something went wrong, please try again'
+                    'status' => 204,
+                    'message' => 'No test categories found',
                 ]);
             }
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => 500,
-                'message' => 'fatal error',
+                'message' => 'Fatal error',
                 'error' => $e->getMessage(),
             ]);
         }
-       
-        
-        
     }
+    
 
     public function editTestCategory($id){
         try{

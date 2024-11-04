@@ -381,7 +381,6 @@ class RegisterController extends Controller
     }
     
 
-
     // this function is being used to find doctor or work based on email, name, phone, location
 
     public function autoSearchUser(request $request){
@@ -408,8 +407,6 @@ class RegisterController extends Controller
         return response()->json(['suggestions' => $suggestions]);
     }
     
-
-
 
     // controller specific helpers 
 
