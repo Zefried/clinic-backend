@@ -5,6 +5,7 @@ namespace App\Http\Controllers\LabMasterController;
 use App\Http\Controllers\Controller;
 
 use App\Models\TestCategory;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -63,7 +64,7 @@ class TestCategoryController extends Controller
             $recordsPerPage = $request->query('recordsPerPage', 10);
     
             // Fetch paginated data from the model
-            $testCategoryData = TestCategory::where('status', '!=', '0')
+            $testCategoryData = TestCategory::where('disable_status', '!=', '1')
                 ->paginate($recordsPerPage, ['id', 'name']);
     
             if ($testCategoryData->isNotEmpty()) {
@@ -150,4 +151,37 @@ class TestCategoryController extends Controller
         }
     }
 
+    public function disableTestCategory($id){
+        try {
+     
+            $categoryRow = TestCategory::where('id', $id)->first();
+    
+    
+            if (!$categoryRow) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'Category not found',
+                ]);
+            }
+    
+    
+            $disable = $categoryRow->update([
+                'disable_status' => true,
+            ]);
+    
+            return response()->json([
+                'status' => 200,
+                'message' => 'Category disabled successfully',
+                'disable_status' => $disable,
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'An error occurred while disabling the category',
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+    
 }

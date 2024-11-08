@@ -7,6 +7,7 @@ use App\Http\Controllers\LabController;
 use App\Http\Controllers\LabMasterController\TestCategoryController;
 use App\Http\Controllers\LabMasterController\TestController;
 use App\Http\Controllers\LabTestController\InsertTestInLab;
+use App\Http\Controllers\patientController\PatientLocationController;
 use App\Http\Controllers\patientController\PatientRegRequestController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\SimpleAuthController;
@@ -60,9 +61,6 @@ Route::post('/hospital-login', [SimpleAuthController::class, 'hospitalLogin']);
 
 // - // working with admin protected routes // - //
 Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function(){
-
-
-
 
 
     // Route for direct doctor and worker registration 
@@ -129,8 +127,12 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function(){
             Route::post('/admin/update-lab-test/{id}', [TestController::class, 'updateLabTest']);
 
                 /////// Search for lab test api
-                Route::get('/admin/search-lab-test', [TestController::class, 'searchLabTest']);
+                Route::get('/admin/search-lab-test', [TestController::class, 'searchLabTests']);
 
+                /////// Disable test category 
+                Route::get('/admin/disable-test-category/{id}', [TestCategoryController::class, 'disableTestCategory']);
+                Route::get('/admin/disable-test/{id}', [TestController::class, 'disableTest']);
+                
             // Route for admin adding employee against labs
             Route::post('/admin/add-employee/{id}', [EmployeeController::class, 'addEmployeeAgainstLab']);
             Route::get('/admin/fetch-lab-employee', [EmployeeController::class, 'fetchEmployee']);
@@ -182,12 +184,20 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function(){
 // - // working with User protected routes // - //
 Route::middleware(['auth:sanctum', UserMiddleware::class])->group(function(){
 
-    // Route for Patient registration request 
+    ////// Route for Patient registration request 
     Route::post('/user/add-patient-request', [PatientRegRequestController::class, 'addPatientRequest']);
     Route::get('/user/fetch-xuser-patient/', [PatientRegRequestController::class, 'fetchXUserPatient']);
-    Route::get('/user/fetch-xuser-pending-patient/', [PatientRegRequestController::class, 'fetchXUserPendingPatient']);
+
+        // Route::get('/user/fetch-xuser-pending-patient/', [PatientRegRequestController::class, 'fetchXUserPendingPatient']);
 
 
+
+
+    /////// Route for adding patient location
+
+            Route::post('/user/add-patient-location', [PatientLocationController::class, 'addPatientLocation']);
+            Route::post('/user/fetch-patient-location', [PatientLocationController::class, 'viewPatientLocation']);
+            Route::post('/user/update-patient-location', [PatientLocationController::class, 'updatePatientLocation']);
 });
 
 

@@ -17,15 +17,15 @@ class UserMiddleware
     {
         $user = $request->user();
 
-        // Check if the user is not authenticated or doesn't have the 'user' role
-        if (!$user || $user->role !== 'user') {
+        // Check if the user is authenticated and has either 'user' or 'admin' role
+        if ($user && ($user->role === 'user' || $user->role === 'admin')) {
+            return $next($request);
+        } else {
             return response()->json([
                 'status' => 403,
-                'message' => !$user ? 'User not found or not authenticated' : 'Unauthorized Access: User or Admin only',
+                'message' => !$user ? 'User not found or not authenticated' : 'Unauthorized Access: User only',
             ], 403);
         }
-
-        return $next($request);
     }
 
 }

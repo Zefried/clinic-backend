@@ -65,13 +65,13 @@ class PatientRegRequestController extends Controller
             if($patientRequestData){
                 return response()->json([
                     'status' => 200,
-                    'message' => 'Patient request sent successfully',
+                    'message' => 'Patient Added successfully',
                     'patient_data' => $patientRequestData,
                 ]);
             } else {
                 return response()->json([
                     'status' => 401,
-                    'message' => 'something went wrong when registering patient request',
+                    'message' => 'something went wrong when registering patient',
                 ]);
             }
 
@@ -87,8 +87,14 @@ class PatientRegRequestController extends Controller
     }
 
     public function fetchXUserPatient(request $request){
-        $data = $request->user();
-        $patientFetchedData = PatientData::where('associated_user_email', $data->email)->where('disable', 0)->get();
+        $user = $request->user();
+
+        if($user->role === 'admin'){
+            $patientFetchedData = PatientData::where('disable_status', 0)->get();
+        } else {
+            $patientFetchedData = PatientData::where('associated_user_email', $user->email)->where('disable_status', 0)->get();
+        }
+       
 
         return response()->json([
             'status' => 200,

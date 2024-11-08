@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 
 class InsertTestInLab extends Controller
 {
+    
     public function insertLabTest(request $request){
 
         try{

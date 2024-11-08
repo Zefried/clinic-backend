@@ -5,20 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class TestCategory extends Model
+class PatientLocation extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'description',
-        'status',
+        'location_name',
         'disable_status',
     ];
-
-
-    public function tests()
-    {
-        return $this->hasMany(Test::class)->where('disable_status', '!=', '1');
-    }
 }

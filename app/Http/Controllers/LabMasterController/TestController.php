@@ -60,12 +60,12 @@ class TestController extends Controller
     public function fetchTestWithId($id, Request $request){
 
         try {
+
         $recordsPerPage = $request->query('recordsPerPage', 10);
 
         // Fetch paginated data from the model
         $testData = TestCategory::where('id', $id)
             ->with('tests')
-            ->where('status', '!=', '0')
             ->paginate($recordsPerPage);
 
         if ($testData->isNotEmpty()) {
@@ -92,7 +92,6 @@ class TestController extends Controller
             ]);
         }
     }
-
 
     public function editLabTest($id){
         try{
@@ -153,7 +152,38 @@ class TestController extends Controller
         }
     }
 
-    public function searchLabTest(Request $request) {
+    public function disableTest($id){
+        try {
+     
+            $testRow = Test::where('id', $id)->first();
+    
+            if (!$testRow) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'test not found',
+                ]);
+            }
+    
+            $disable = $testRow->update([
+                'disable_status' => true,
+            ]);
+    
+            return response()->json([
+                'status' => 200,
+                'message' => 'test disabled successfully',
+                'disable_status' => $disable,
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'An error occurred while disabling the test',
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function searchLabTests(Request $request) {
         try{
 
             $query = $request->input('query');
@@ -162,12 +192,14 @@ class TestController extends Controller
                 return response()->json(['results' => []]);
             }
         
+            
             $results = Test::where('disable_status', '!=', '1')
                         ->where('name', 'like', '%' . $query . '%')
                         ->take(10)
                         ->get(['id', 'name']);
         
             return response()->json([
+                'status' => 200,
                 'suggestions' => $results
             ]);
 
@@ -180,5 +212,7 @@ class TestController extends Controller
         }
         
     }
+
+
     
 }
