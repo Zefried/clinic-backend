@@ -7,6 +7,7 @@ use App\Http\Controllers\LabController;
 use App\Http\Controllers\LabMasterController\TestCategoryController;
 use App\Http\Controllers\LabMasterController\TestController;
 use App\Http\Controllers\LabTestController\InsertTestInLab;
+use App\Http\Controllers\PatientController\PatientFlowController;
 use App\Http\Controllers\patientController\PatientLocationController;
 use App\Http\Controllers\patientController\PatientRegRequestController;
 use App\Http\Controllers\RegisterController;
@@ -188,7 +189,6 @@ Route::middleware(['auth:sanctum', UserMiddleware::class])->group(function(){
     Route::post('/user/add-patient-request', [PatientRegRequestController::class, 'addPatientRequest']);
     Route::get('/user/fetch-xuser-patient/', [PatientRegRequestController::class, 'fetchXUserPatient']);
 
-        // Route::get('/user/fetch-xuser-pending-patient/', [PatientRegRequestController::class, 'fetchXUserPendingPatient']);
 
 
 
@@ -206,6 +206,16 @@ Route::middleware(['auth:sanctum', UserMiddleware::class])->group(function(){
 
             // fetching patient all data
             Route::post('/user/fetch-patient-all-location', [PatientLocationController::class, 'fetchPatientAllLocation']);
+
+     /////// Ends here      
+     
+     
+      ////// Route for Patient flow control (edit, card, full info, assign step 1) 
+      
+            Route::get('/user/view-patient-card/{id}', [PatientFlowController::class, 'patientCardView']);
+      
+
+      ////// Ends here
 });
 
 

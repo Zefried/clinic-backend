@@ -32,4 +32,9 @@ class PatientData extends Model
         'disable_status',
     ];
     
+
+    public function patientLocationCount()
+    {
+        return $this->hasOne(Patient_location_Count::class, 'patient_id');
+    }
 }

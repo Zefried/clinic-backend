@@ -19,6 +19,16 @@ class PatientRegRequestController extends Controller
     ///////// patient resource creation starts here
 
     public function addPatientRequest(Request $request) {
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required',
+            'patient_location_id' => 'required',
+        ]);
+
+        if($validator->fails()){
+            return response()->json(['validation_error' => $validator->messages()]);
+        }
+       
         try {
 
             $userData = $request->user();
@@ -26,21 +36,21 @@ class PatientRegRequestController extends Controller
             $patientRequestData = PatientData::create([
                 'name' => $request->input('name'),
                 'patient_location_id' => $request->input('patient_location_id'),
-                // 'age' => $request->input('age'),
-                // 'sex' => $request->input('sex'),
-                // 'relativeName' => $request->input('relativeName'),
-                // 'phone' => $request->input('phone'),
-                // 'email' => $request->input('email'),
-                // 'identityProof' => $request->input('identityProof'),
-                // 'village' => $request->input('village'),
-                // 'po' => $request->input('po'),
-                // 'ps' => $request->input('ps'),
-                // 'pin' => $request->input('pin'),
-                // 'district' => $request->input('district'),
-                // 'state' => $request->input('state'),
-                // 'request_status' => 'pending',
-                // 'associated_user_email' => $data->email,
-                // 'associated_user_id' => $data->id,
+                'age' => $request->input('age'),
+                'sex' => $request->input('sex'),
+                'relativeName' => $request->input('relativeName'),
+                'phone' => $request->input('phone'),
+                'email' => $request->input('email'),
+                'identityProof' => $request->input('identityProof'),
+                'village' => $request->input('village'),
+                'po' => $request->input('po'),
+                'ps' => $request->input('ps'),
+                'pin' => $request->input('pin'),
+                'district' => $request->input('district'),
+                'state' => $request->input('state'),
+                'request_status' => 'pending',
+                'associated_user_email' => $userData->email,
+                'associated_user_id' => $userData->id,
             ]);
     
             if ($patientRequestData) {
@@ -65,6 +75,7 @@ class PatientRegRequestController extends Controller
                         ]);
                     }
                 } else {
+
                     $newPatientCardId = $this->generatePatientCardId($patientRequestData->patient_location_id, $userData);
                     $this->createPatientLocationCount($patientRequestData, $userData->id, $newPatientCardId);
     
@@ -147,14 +158,27 @@ class PatientRegRequestController extends Controller
     }
 
     public function fetchingAllPatient(request $request){
-        $email = $request->selected['email'];
-       
-        $patientFetchedData = PatientData::where('associated_user_email', $email)->where('disable', 0)->get();
 
-        return response()->json([
-            'status' => 200,
-            'patient_data' => $patientFetchedData,
-        ]);
+        try{
+            $email = $request->selected['email'];
+       
+            $patientFetchedData = PatientData::where('associated_user_email', $email)->where('disable', 0)->get();
+    
+
+            return response()->json([
+                'status' => 200,
+                'patient_data' => $patientFetchedData,
+            ]);
+
+        }catch(Exception $e){
+            
+            return response()->json([
+                'status' => 500,
+                'error' => $e->getMessage(),
+            ]);
+        }
+       
+    
     }
 
     public function fetchingUserSpecificPatient(request $request){
@@ -169,13 +193,6 @@ class PatientRegRequestController extends Controller
     }
 
      //helper function to double check and generate a unique user id for every account
-    private function generateUniqueUserId() {
-        do {
-            $uniquePtId = 'PT-' . strtoupper(uniqid()); // Generating a new unique ID
-        } while (User::where('unique_user_id', $uniquePtId)->exists()); // Checking for uniqueness
-        
-        return $uniquePtId; 
-    }
 
     public function autoSearchUser(request $request){
   

@@ -152,7 +152,8 @@ class PatientLocationController extends Controller
             
             // fetching associated doctor or sewek for reference in patient assigned table
 
-            $patientLocationData = PatientLocation::get(['location_name', 'id']);
+            $patientLocationData = PatientLocation::orderBy('location_name', 'asc')->get(['location_name', 'id']);
+
 
             if($patientLocationData){
 

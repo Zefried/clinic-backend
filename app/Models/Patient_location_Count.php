@@ -15,4 +15,9 @@ class Patient_location_Count extends Model
         'patient_id',
         'associated_user_id',
     ];
+
+    public function patientData()
+    {
+        return $this->belongsTo(PatientData::class, 'patient_id');
+    }
 }
