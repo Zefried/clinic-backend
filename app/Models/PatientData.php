@@ -11,6 +11,8 @@ class PatientData extends Model
 
     protected $fillable = [
         'name',
+        'patient_location',
+        'patient_location_id',
         'age',
         'sex',
         'relativeName',

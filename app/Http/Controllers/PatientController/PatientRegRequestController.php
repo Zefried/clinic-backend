@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\patientController;
 
-use App\Http\Controllers\Controller; 
+use App\Http\Controllers\Controller;
+use App\Models\Patient_location_Count;
 use App\Models\PatientData;
+use App\Models\PatientLocation;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
@@ -12,79 +14,111 @@ use Illuminate\Support\Facades\Validator;
 // patient registration request controller
 class PatientRegRequestController extends Controller
 {
+  
+    
+    ///////// patient resource creation starts here
 
-    public function addPatientRequest(Request $request){
+    public function addPatientRequest(Request $request) {
+        try {
 
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'age' => 'required|integer|min:0',
-            // 'sex' => 'required|string',
-            // 'relativeName' => 'nullable|string|max:255',
-           'phone' => 'required|string|min:10|max:10|unique:patient_data,phone',
-            // 'email' => 'nullable|email|max:255',
-            // 'identityProof' => 'required',
-            // 'village' => 'nullable|string|max:255',
-            // 'po' => 'nullable|string|max:255',
-            // 'ps' => 'nullable|string|max:255',
-            // 'pin' => 'nullable|string|max:6',
-            // 'district' => 'required|string|max:255',
-            // 'state' => 'required|string|max:255',
-
-        ]);
-
-
-        if($validator->fails()){
-            return response()->json(['validation_error'=> $validator->messages()]);
-        }
-
-        try{
-
-            //storing associated doctor or pharma with patient data
-            $data = $request->user();
-            
+            $userData = $request->user();
+    
             $patientRequestData = PatientData::create([
                 'name' => $request->input('name'),
-                'age' => $request->input('age'),
-                'sex' => $request->input('sex'),
-                'relativeName' => $request->input('relativeName'),
-                'phone' => $request->input('phone'),
-                'email' => $request->input('email'),
-                'identityProof' => $request->input('identityProof'),
-                'village' => $request->input('village'),
-                'po' => $request->input('po'),
-                'ps' => $request->input('ps'),
-                'pin' => $request->input('pin'),
-                'district' => $request->input('district'),
-                'state' => $request->input('state'),
-                'unique_patient_id' => $this->generateUniqueUserId(),
-                'request_status' => 'pending',
-                'associated_user_email' => $data->email,
-                'associated_user_id' => $data->id,
+                'patient_location_id' => $request->input('patient_location_id'),
+                // 'age' => $request->input('age'),
+                // 'sex' => $request->input('sex'),
+                // 'relativeName' => $request->input('relativeName'),
+                // 'phone' => $request->input('phone'),
+                // 'email' => $request->input('email'),
+                // 'identityProof' => $request->input('identityProof'),
+                // 'village' => $request->input('village'),
+                // 'po' => $request->input('po'),
+                // 'ps' => $request->input('ps'),
+                // 'pin' => $request->input('pin'),
+                // 'district' => $request->input('district'),
+                // 'state' => $request->input('state'),
+                // 'request_status' => 'pending',
+                // 'associated_user_email' => $data->email,
+                // 'associated_user_id' => $data->id,
             ]);
+    
+            if ($patientRequestData) {
+                
+                $count = Patient_location_Count::where('patient_id', $patientRequestData->id)->count();
+    
+                if ($count !== 0) {
 
-            if($patientRequestData){
-                return response()->json([
-                    'status' => 200,
-                    'message' => 'Patient Added successfully',
-                    'patient_data' => $patientRequestData,
-                ]);
-            } else {
-                return response()->json([
-                    'status' => 401,
-                    'message' => 'something went wrong when registering patient',
-                ]);
+                    if (!empty($patientRequestData->patient_card_id)) {
+                        return response()->json([
+                            'status' => 200,
+                            'message' => 'Initial patient data created. No further action required.'
+                        ]);
+                    } else {
+                        $newPatientCardId = $this->generatePatientCardId($patientRequestData->patient_location_id, $userData);
+                        $this->createPatientLocationCount($patientRequestData, $userData->id, $newPatientCardId);
+    
+                        return response()->json([
+                            'status' => 201,
+                            'message' => 'New patient data and card id created successfully.',
+                            'patient_card_id' => $newPatientCardId,
+                        ]);
+                    }
+                } else {
+                    $newPatientCardId = $this->generatePatientCardId($patientRequestData->patient_location_id, $userData);
+                    $this->createPatientLocationCount($patientRequestData, $userData->id, $newPatientCardId);
+    
+                    return response()->json([
+                            'status' => 201,
+                            'message' => 'New patient data and card id created successfully.',
+                            'patient_card_id' => $newPatientCardId,
+                    ]);
+                }
             }
-
-        }catch(Exception $e){
-
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => 500,
-                'message' => 'fetal error',
-                'error' => $e->getMessage(),
+                'error' => $e->getMessage()
             ]);
         }
+    }
+    
+    // Helper function to generate the patient card ID
+    private function generatePatientCardId($locationId, $userData) {
+        $location = PatientLocation::find($locationId);
+    
+        if ($location) {
+            $locationAbbreviation = strtoupper(substr($location->location_name, 0, 3));
+            
+            // Pad the location count to two digits
+            $locationCount = str_pad(Patient_location_Count::where('location_id', $locationId)->count() + 1, 2, '0', STR_PAD_LEFT);
+    
+            // Pad the user ID to two digits
+            $formattedUserId = str_pad($userData->id, 2, '0', STR_PAD_LEFT);
+    
+            // Construct the patient_card_id with both padded values
+            return $locationAbbreviation . '-' . $locationCount . '-' . $formattedUserId;
+            
+        }
+    
+        throw new \Exception("Location not found.");
+    }
+    
+    // Helper function to create a new record in Patient_location_Count
+    private function createPatientLocationCount($patientData, $userId, $patientCardId) {
+       
+        return Patient_location_Count::create([
+            'location_id' => $patientData->patient_location_id,
+            'patient_id' => $patientData->id,
+            'associated_user_id' => $userId,
+            'patient_card_id' => $patientCardId,
+        ]);
 
     }
+    
+
+
+    ///////// patient resource creation ends here
 
     public function fetchXUserPatient(request $request){
         $user = $request->user();
@@ -161,3 +195,5 @@ class PatientRegRequestController extends Controller
     }
     
 }
+
+

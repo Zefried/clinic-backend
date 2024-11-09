@@ -197,7 +197,15 @@ Route::middleware(['auth:sanctum', UserMiddleware::class])->group(function(){
 
             Route::post('/user/add-patient-location', [PatientLocationController::class, 'addPatientLocation']);
             Route::post('/user/fetch-patient-location', [PatientLocationController::class, 'viewPatientLocation']);
+            
+            // updating patient location data
             Route::post('/user/update-patient-location', [PatientLocationController::class, 'updatePatientLocation']);
+            
+            // disabling patient location data
+            Route::get('/user/disable-patient-location/{id}', [PatientLocationController::class, 'disablePatientLocation']);
+
+            // fetching patient all data
+            Route::post('/user/fetch-patient-all-location', [PatientLocationController::class, 'fetchPatientAllLocation']);
 });
 
 

@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\PatientLocation;
 use Exception;
 
+use function PHPSTORM_META\map;
+
 class PatientLocationController extends Controller
 {
 
@@ -122,6 +124,61 @@ class PatientLocationController extends Controller
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    public function disablePatientLocation($id){
+        $locationData = PatientLocation::findOrFail($id);
+
+        $locationDisable = $locationData->update([
+             'disable_status' => true,
+        ]);
+
+        if($locationDisable){
+            return response()->json([
+                'status' => 200,
+                'message' => 'Location disabled successfully',
+            ]);
+        } else {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Location data not found',
+            ]);
+        }
+       
+    }
+
+    public function fetchPatientAllLocation(){
+        try{
+            
+            // fetching associated doctor or sewek for reference in patient assigned table
+
+            $patientLocationData = PatientLocation::get(['location_name', 'id']);
+
+            if($patientLocationData){
+
+                return response()->json([
+                    'status' => 200,    
+                    'message' => 'Patient Location Fetched Successfully',
+                    'list_data' => $patientLocationData,
+                ]);
+
+            } else {
+                return response()->json([
+                    'status' => 204,
+                    'message' => 'No Data Found',
+                ]);
+            }
+         
+
+        }catch(Exception $e){
+
+            return response()->json([
+                'status' => 500,
+                'message' => 'Something went wrong while fetching location name',
+                'error' => $e->getMessage(),
+            ]);
+        }
+        
     }
     
 }
