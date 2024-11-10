@@ -153,8 +153,9 @@ class PatientFlowController extends Controller
 
 
     public function submitPatientAssignedData(Request $request) {
+       
         DB::beginTransaction();
-
+    
         // Validation of incoming request
         $validator = Validator::make($request->all(), [
             'patient_id' => 'required|string',
@@ -169,21 +170,32 @@ class PatientFlowController extends Controller
             'disable_status' => 'nullable|boolean',
             'doc_path' => 'nullable|string',
             'test_ids' => 'required|array|min:1',
+            'visit' => 'required|integer',
         ]);
-
+    
         if ($validator->fails()) {
-            DB::rollBack();
             return response()->json([
-                'status' => 422,  // Validation error
+                'status' => 422,
                 'errors' => $validator->messages(),
             ]);
         }
-
-        $associated_user_id = PatientData::where('id', $request->input('patient_id'))
-        ->pluck('associated_user_id')->first();
-
+    
         try {
-            // Creating the patient assigned data record
+
+            // Retrieving the associated user ID
+            $associated_user_id = PatientData::where('id', $request->input('patient_id'))
+                ->pluck('associated_user_id')
+                ->first();
+    
+            // Checking if a record with the same `patient_id` already exists
+            $existingRecord = PatientAssignedData::where('patient_id', $request->input('patient_id'))->first();
+    
+            if ($existingRecord) {
+                // Calling an update method if needed to update existing data
+                return $this->updatePatientAssignedData($existingRecord, $request);
+            } 
+    
+            // Creating a new patient assigned data record
             $patientAssignedData = PatientAssignedData::create([
                 'patient_id' => $request->input('patient_id'),
                 'patient_name' => $request->input('patient_name'),
@@ -196,26 +208,37 @@ class PatientFlowController extends Controller
                 'associated_sewek_id' => $associated_user_id,
                 'disable_status' => $request->input('disable_status'),
                 'doc_path' => $request->input('doc_path'),
-                // 'test_ids' => implode(',', $request->input('test_ids')),
+                'test_ids' => json_encode($request->input('test_ids')),  
                 'visit' => $request->input('visit'),
             ]);
-
+    
             DB::commit();
-
+    
             return response()->json([
-                'status' => 200,  // Success
+                'status' => 200,
                 'message' => 'Patient assigned data saved successfully',
                 'data' => $patientAssignedData,
             ]);
-
+    
         } catch (Exception $e) {
             DB::rollBack();
             return response()->json([
-                'status' => 500,  // Internal server error
+                'status' => 500,
                 'error' => 'Database error: ' . $e->getMessage(),
                 'message' => 'There was an issue saving the data. Please try again.',
             ]);
         }
+    }
+    
+
+    public function updatePatientAssignedData($existingRecord, $request){
+        $allPatientData = PatientAssignedData::all(['id', 'test_ids']);
+
+        // Decode `test_ids` for each record
+        $decoded = $allPatientData->each(function ($item) {
+            $item->test_ids = json_decode($item->test_ids, true);
+        });
+        return response()->json($decoded);
     }
 
     
