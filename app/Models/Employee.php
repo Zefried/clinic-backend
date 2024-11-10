@@ -24,4 +24,10 @@ class Employee extends Model
     {
         return $this->belongsTo(LabModel::class, 'lab_id');
     }
+
+    // Reverse relationship with PatientAssignedData
+    public function patientAssignedData()
+    {
+        return $this->hasMany(PatientAssignedData::class, 'employee_id');
+    }
 }

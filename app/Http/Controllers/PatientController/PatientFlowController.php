@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers\PatientController;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\LabModel;
 use App\Models\LabTest;
 use App\Models\Patient_location_Count;
+use App\Models\PatientAssignedData;
 use App\Models\PatientData;
 use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class PatientFlowController extends Controller
 {
@@ -114,7 +117,7 @@ class PatientFlowController extends Controller
 
     public function fetchLabTestAllData($labId) {
         try {
-            
+
             if (!$labId) {
                 return response()->json([
                     'status' => 400,
@@ -147,6 +150,74 @@ class PatientFlowController extends Controller
         }
     }
     
+
+
+    public function submitPatientAssignedData(Request $request) {
+        DB::beginTransaction();
+
+        // Validation of incoming request
+        $validator = Validator::make($request->all(), [
+            'patient_id' => 'required|string',
+            'patient_name' => 'required|string',
+            'lab_id' => 'required|string',
+            'lab_name' => 'required|string',
+            'employee_id' => 'required|string',
+            'employee_name' => 'required|string',
+            'discount' => 'nullable|numeric',
+            'final_discount' => 'nullable|numeric',
+            'associated_sewek_id' => 'nullable|integer',
+            'disable_status' => 'nullable|boolean',
+            'doc_path' => 'nullable|string',
+            'test_ids' => 'required|array|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 422,  // Validation error
+                'errors' => $validator->messages(),
+            ]);
+        }
+
+        $associated_user_id = PatientData::where('id', $request->input('patient_id'))
+        ->pluck('associated_user_id')->first();
+
+        try {
+            // Creating the patient assigned data record
+            $patientAssignedData = PatientAssignedData::create([
+                'patient_id' => $request->input('patient_id'),
+                'patient_name' => $request->input('patient_name'),
+                'lab_id' => $request->input('lab_id'),
+                'lab_name' => $request->input('lab_name'),
+                'employee_id' => $request->input('employee_id'),
+                'employee_name' => $request->input('employee_name'),
+                'discount' => $request->input('discount'),
+                'final_discount' => $request->input('final_discount'),
+                'associated_sewek_id' => $associated_user_id,
+                'disable_status' => $request->input('disable_status'),
+                'doc_path' => $request->input('doc_path'),
+                // 'test_ids' => implode(',', $request->input('test_ids')),
+                'visit' => $request->input('visit'),
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 200,  // Success
+                'message' => 'Patient assigned data saved successfully',
+                'data' => $patientAssignedData,
+            ]);
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 500,  // Internal server error
+                'error' => 'Database error: ' . $e->getMessage(),
+                'message' => 'There was an issue saving the data. Please try again.',
+            ]);
+        }
+    }
+
     
     
 
