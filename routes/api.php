@@ -179,9 +179,6 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function(){
 
 
 
-
-
-
 // - // working with User protected routes // - //
 Route::middleware(['auth:sanctum', UserMiddleware::class])->group(function(){
 
@@ -211,16 +208,14 @@ Route::middleware(['auth:sanctum', UserMiddleware::class])->group(function(){
      
      
       ////// Route for Patient flow control (edit, card, full info) 
-      
             Route::get('/user/view-patient-card/{id}', [PatientFlowController::class, 'patientCardView']);
-      
       ////// Ends here
 
 
       ////// Route for Patient Assigning flow control
             Route::get('/user/fetch-lab-patient-name', [PatientFlowController::class, 'fetchLabPatientName']);
             Route::get('/user/fetch-lab-associated-employee', [PatientFlowController::class, 'fetchLabAssociatedEmployee']);
-
+            Route::get('/user/fetch-lab-test-allData/{id}', [PatientFlowController::class, 'fetchLabTestAllData']);
       ////// ends here
 
 

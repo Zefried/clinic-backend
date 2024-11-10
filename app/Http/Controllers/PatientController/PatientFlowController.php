@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\LabModel;
+use App\Models\LabTest;
 use App\Models\Patient_location_Count;
 use App\Models\PatientData;
 use Exception;
@@ -75,7 +76,7 @@ class PatientFlowController extends Controller
         }
     }
 
-    
+
     public function fetchLabAssociatedEmployee(Request $request) {
         try {
             $labId = $request->query('labId');
@@ -99,6 +100,42 @@ class PatientFlowController extends Controller
             return response()->json([
                 'status' => 200,
                 'employeeData' => $employeeData,
+            ]);
+    
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'An unexpected error occurred',
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+    
+
+    public function fetchLabTestAllData($labId) {
+        try {
+            
+            if (!$labId) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'Lab ID is required',
+                ]);
+            }
+    
+            $allTestData = LabTest::where('lab_id', $labId)
+                ->where('disable_status', '!=', '1')
+                ->get(['lab_test_name', 'lab_test_id']);
+    
+            if ($allTestData->isEmpty()) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'No lab test data found for the given Lab ID',
+                ]);
+            }
+    
+            return response()->json([
+                'status' => 200,
+                'allTestData' => $allTestData,
             ]);
     
         } catch (Exception $e) {
