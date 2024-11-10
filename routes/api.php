@@ -210,12 +210,20 @@ Route::middleware(['auth:sanctum', UserMiddleware::class])->group(function(){
      /////// Ends here      
      
      
-      ////// Route for Patient flow control (edit, card, full info, assign step 1) 
+      ////// Route for Patient flow control (edit, card, full info) 
       
             Route::get('/user/view-patient-card/{id}', [PatientFlowController::class, 'patientCardView']);
       
-
       ////// Ends here
+
+
+      ////// Route for Patient Assigning flow control
+            Route::get('/user/fetch-lab-patient-name', [PatientFlowController::class, 'fetchLabPatientName']);
+            Route::get('/user/fetch-lab-associated-employee', [PatientFlowController::class, 'fetchLabAssociatedEmployee']);
+
+      ////// ends here
+
+
 });
 
 
