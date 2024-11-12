@@ -221,6 +221,14 @@ Route::middleware(['auth:sanctum', UserMiddleware::class])->group(function(){
             Route::post('/user/submit-patient-assigned-data', [PatientFlowController::class, 'submitPatientAssignedData']);
             // ends here
 
+            // fetching & searching assigned patient data
+            Route::get('/user/fetch-assigned-patient-data', [PatientFlowController::class, 'fetchAssignedPatient']);
+            Route::get('/user/search-assigned-patient-data', [PatientFlowController::class, 'searchAssignedPatient']);
+            // ends here
+
+            // searching patient data 
+            Route::get('/user/search-patient', [PatientFlowController::class, 'searchPatientsByNameAndLocation']);
+
 
       ////// ends here
 

@@ -23,7 +23,7 @@ return new class extends Migration
             $table->decimal('discount', 8, 2)->nullable();
             $table->decimal('final_discount', 8, 2)->nullable();
             $table->unsignedBigInteger('associated_sewek_id')->nullable()->index();
-            $table->string('disable_status')->nullable();
+            $table->string('disable_status')->nullable()->default(false);
             $table->string('doc_path')->nullable();
             $table->json('test_ids')->nullable();
             $table->integer('visit')->default(0);

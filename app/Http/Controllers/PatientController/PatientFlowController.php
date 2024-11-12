@@ -158,7 +158,7 @@ class PatientFlowController extends Controller
     
         // Validation of incoming request
         $validator = Validator::make($request->all(), [
-            'patient_id' => 'required|string',
+            'patient_id' => 'required',
             'patient_name' => 'required|string',
             'lab_id' => 'required|string',
             'lab_name' => 'required|string',
@@ -231,16 +231,117 @@ class PatientFlowController extends Controller
     }
     
 
-    public function updatePatientAssignedData($existingRecord, $request){
-        $allPatientData = PatientAssignedData::all(['id', 'test_ids']);
-
-        // Decode `test_ids` for each record
-        $decoded = $allPatientData->each(function ($item) {
-            $item->test_ids = json_decode($item->test_ids, true);
-        });
-        return response()->json($decoded);
+    public function updatePatientAssignedData($existingRecord, Request $request) {
+        DB::beginTransaction();
+        
+        try {
+            // Update fields with new data from the request
+            $existingRecord->update([
+                'patient_name' => $request->input('patient_name'),
+                'lab_id' => $request->input('lab_id'),
+                'lab_name' => $request->input('lab_name'),
+                'employee_id' => $request->input('employee_id'),
+                'employee_name' => $request->input('employee_name'),
+                'discount' => $request->input('discount'),
+                'final_discount' => $request->input('final_discount'),
+                'disable_status' => $request->input('disable_status'),
+                'doc_path' => $request->input('doc_path'),
+                'test_ids' => json_encode($request->input('test_ids')),  
+                'visit' => $request->input('visit'),
+            ]);
+    
+            DB::commit();
+    
+            return response()->json([
+                'status' => 200,
+                'message' => 'Patient assigned data updated successfully',
+                'data' => $existingRecord,
+            ]);
+    
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 500,
+                'error' => 'Database error: ' . $e->getMessage(),
+                'message' => 'There was an issue updating the data. Please try again.',
+            ]);
+        }
     }
+    
 
+
+
+    public function fetchAssignedPatient(Request $request)
+    {
+        try {
+
+            // Set default records per page or use query parameter value
+            $recordsPerPage = $request->query('recordsPerPage', 10);
+    
+            // Fetch paginated data for assigned patients
+            $assignedPatientData = PatientAssignedData::where('disable_status', '!=', '1')
+                ->paginate($recordsPerPage);
+    
+            // Check if any data was found
+            if ($assignedPatientData->isEmpty()) {
+                return response()->json([
+                    'status' => 204,
+                    'message' => 'No assigned patient data found',
+                ]);
+            }
+    
+            // Return paginated data with additional pagination details
+            return response()->json([
+                'status' => 200,
+                'listData' => $assignedPatientData->items(),
+                'message' => 'Total assigned patient data found: ' . $assignedPatientData->total(),
+                'total' => $assignedPatientData->total(),
+                'current_page' => $assignedPatientData->currentPage(),
+                'last_page' => $assignedPatientData->lastPage(),
+                'per_page' => $assignedPatientData->perPage(),
+            ]);
+    
+        } catch (Exception $e) {
+            // Handle exceptions with a 500 status
+            return response()->json([
+                'status' => 500,
+                'message' => 'Failed to fetch assigned patient data. Please check the console for errors.',
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+    
+
+    public function searchPatientsByNameAndLocation(Request $request) {
+        $query = $request->input('query');
+    
+        // Early return for empty queries
+        if (empty($query)) {
+            return response()->json(['results' => []]);
+        }
+    
+        try {
+            $results = PatientAssignedData::where('disable_status', '!=', '1')
+                ->where(function ($subQuery) use ($query) {
+                    $subQuery->where('patient_name', 'like', '%' . $query . '%')
+                             ->orWhere('employee_name', 'like', '%' . $query . '%');
+                })
+                ->take(10)  // Limit results to 10 for efficiency
+                ->get(['patient_id', 'patient_name', 'lab_id', 'lab_name', 'employee_name', 'employee_id']);  // Retrieve only relevant fields
+    
+            return response()->json([
+                'status' => 200,
+                'results' => $results,
+            ]);
+    
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 500,
+                'error' => 'Database error: ' . $e->getMessage(),
+                'message' => 'There was an issue with the search. Please try again.',
+            ]);
+        }
+    }
     
     
 
