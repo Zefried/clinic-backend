@@ -108,10 +108,10 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function(){
 
 
     // Route for admin searching pending patient against specific doctor worker
-    Route::get('/admin/auto-search-user', [PatientRegRequestController::class, 'autoSearchUser']);
-    Route::post('/admin/fetch-all-patient/', [PatientRegRequestController::class, 'fetchingAllPatient']);
-    Route::post('/admin/fetch-all-pending-patient/', [PatientRegRequestController::class, 'fetchingUserSpecificPatient']);
-    
+        // Route::get('/admin/auto-search-user', [PatientRegRequestController::class, 'autoSearchUser']);
+        // Route::post('/admin/fetch-all-patient/', [PatientRegRequestController::class, 'fetchingAllPatient']);
+        // Route::post('/admin/fetch-all-pending-patient/', [PatientRegRequestController::class, 'fetchingUserSpecificPatient']);
+        
 
 
 
@@ -184,7 +184,7 @@ Route::middleware(['auth:sanctum', UserMiddleware::class])->group(function(){
 
     ////// Route for Patient registration request 
     Route::post('/user/add-patient-request', [PatientRegRequestController::class, 'addPatientRequest']);
-    Route::get('/user/fetch-xuser-patient/', [PatientRegRequestController::class, 'fetchXUserPatient']);
+    Route::get('/user/fetch-all-patient/', [PatientRegRequestController::class, 'fetchAllPatient']);
 
 
 

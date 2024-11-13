@@ -131,21 +131,38 @@ class PatientRegRequestController extends Controller
 
     ///////// patient resource creation ends here
 
-    public function fetchXUserPatient(request $request){
+    public function fetchAllPatient(Request $request)
+    {
         $user = $request->user();
-
-        if($user->role === 'admin'){
-            $patientFetchedData = PatientData::where('disable_status', 0)->get();
-        } else {
-            $patientFetchedData = PatientData::where('associated_user_email', $user->email)->where('disable_status', 0)->get();
+        
+        $query = PatientData::where('disable_status', 0);
+    
+        if ($user->role !== 'admin') {
+            $query->where('associated_user_email', $user->email);
         }
-       
 
-        return response()->json([
-            'status' => 200,
-            'patient_data' => $patientFetchedData,
-        ]);
+        $recordsPerPage = $request->input('recordsPerPage', 10);  // Set default to 10
+        $page = $request->input('page', 1);
+    
+    
+        try {
+            $patientFetchedData = $query->paginate($recordsPerPage, ['*'], 'page', $page);
+    
+            return response()->json([
+                'status' => 200,
+                'listData' => $patientFetchedData->items(),  // No need for null check
+                'total' => $patientFetchedData->total(),    // No need for null check
+                'message' => 'Data fetched successfully',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Failed to fetch data',
+                'error' => $e->getMessage(),  // Provides error message for debugging
+            ]);
+        }
     }
+    
 
     public function fetchXUserPendingPatient(request $request){
         $data = $request->user();
