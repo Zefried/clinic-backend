@@ -270,7 +270,6 @@ class PatientFlowController extends Controller
     
 
 
-
     public function fetchAssignedPatient(Request $request)
     {
         try {

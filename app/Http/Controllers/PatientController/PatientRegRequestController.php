@@ -164,52 +164,52 @@ class PatientRegRequestController extends Controller
     }
     
 
-    public function fetchXUserPendingPatient(request $request){
-        $data = $request->user();
-        $patientPendingData = PatientData::where('associated_user_email', $data->email)->where('request_status', 'pending')->where('disable', 0)->get();
+    // public function fetchXUserPendingPatient(request $request){
+    //     $data = $request->user();
+    //     $patientPendingData = PatientData::where('associated_user_email', $data->email)->where('request_status', 'pending')->where('disable', 0)->get();
 
-        return response()->json([
-            'status' => 200,
-            'patient_data' => $patientPendingData,
-        ]);
-    }
+    //     return response()->json([
+    //         'status' => 200,
+    //         'patient_data' => $patientPendingData,
+    //     ]);
+    // }
 
-    public function fetchingAllPatient(request $request){
+    // public function fetchingAllPatient(request $request){
 
-        try{
-            $email = $request->selected['email'];
+    //     try{
+    //         $email = $request->selected['email'];
        
-            $patientFetchedData = PatientData::where('associated_user_email', $email)->where('disable', 0)->get();
+    //         $patientFetchedData = PatientData::where('associated_user_email', $email)->where('disable', 0)->get();
     
 
-            return response()->json([
-                'status' => 200,
-                'patient_data' => $patientFetchedData,
-            ]);
+    //         return response()->json([
+    //             'status' => 200,
+    //             'patient_data' => $patientFetchedData,
+    //         ]);
 
-        }catch(Exception $e){
+    //     }catch(Exception $e){
             
-            return response()->json([
-                'status' => 500,
-                'error' => $e->getMessage(),
-            ]);
-        }
+    //         return response()->json([
+    //             'status' => 500,
+    //             'error' => $e->getMessage(),
+    //         ]);
+    //     }
        
     
-    }
+    // }
 
-    public function fetchingUserSpecificPatient(request $request){
-        $email = $request->selected['email'];
 
-        $patientPendingData = PatientData::where('associated_user_email', $email)->where('request_status', 'pending')->where('disable', 0)->get();
+    // public function fetchingUserSpecificPatient(request $request){
+    //     $email = $request->selected['email'];
 
-        return response()->json([
-            'status' => 200,
-            'patient_data' => $patientPendingData,
-        ]);
-    }
+    //     $patientPendingData = PatientData::where('associated_user_email', $email)->where('request_status', 'pending')->where('disable', 0)->get();
 
-     //helper function to double check and generate a unique user id for every account
+    //     return response()->json([
+    //         'status' => 200,
+    //         'patient_data' => $patientPendingData,
+    //     ]);
+    // }
+
 
     public function autoSearchUser(request $request){
   

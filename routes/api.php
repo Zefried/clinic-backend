@@ -11,6 +11,7 @@ use App\Http\Controllers\LabTestController\InsertTestInLab;
 use App\Http\Controllers\PatientController\PatientFlowController;
 use App\Http\Controllers\patientController\PatientLocationController;
 use App\Http\Controllers\patientController\PatientRegRequestController;
+use App\Http\Controllers\patientLabController\PatientLabController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\SimpleAuthController;
 use App\Http\Middleware\AdminMiddleware;
@@ -239,7 +240,8 @@ Route::middleware(['auth:sanctum', UserMiddleware::class])->group(function(){
 Route::middleware(['auth:sanctum', LabMiddleware::class])->group(function(){
 
     Route::get('lab/test', [FakeDataController::class, 'testLabMiddleware']);
-
+    Route::get('lab/fetch-assigned-patient-lab', [PatientLabController::class, 'fetchAssignedPatientLab']);
+    Route::get('lab/search-assigned-patient-lab', [PatientLabController::class, 'searchAssignedPatientLab']);
 });
 
 
