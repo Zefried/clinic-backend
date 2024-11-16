@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class UserMiddleware
+class LabMiddleware
 {
     /**
      * Handle an incoming request.
@@ -20,7 +20,7 @@ class UserMiddleware
         // Check if the user is authenticated and has either 'user' or 'admin' role
         // User routes can be accessed through admin as well
         
-        if ($user && ($user->role === 'user' || $user->role === 'admin')) {
+        if ($user && ($user->role === 'lab' || $user->role === 'admin')) {
             return $next($request);
         } else {
             return response()->json([
@@ -28,6 +28,6 @@ class UserMiddleware
                 'message' => !$user ? 'User not found or not authenticated' : 'Unauthorized Access: User only',
             ], 403);
         }
-    }
 
+    }
 }

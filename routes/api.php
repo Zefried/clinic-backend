@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountRequestController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EmployeeController\EmployeeController;
+use App\Http\Controllers\FakeDataController;
 use App\Http\Controllers\LabController;
 use App\Http\Controllers\LabMasterController\TestCategoryController;
 use App\Http\Controllers\LabMasterController\TestController;
@@ -13,6 +14,8 @@ use App\Http\Controllers\patientController\PatientRegRequestController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\SimpleAuthController;
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\HospitalMiddleware;
+use App\Http\Middleware\LabMiddleware;
 use App\Http\Middleware\UserMiddleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -174,19 +177,12 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function(){
 
 
 
-
-
-
-
-
 // - // working with User protected routes // - //
 Route::middleware(['auth:sanctum', UserMiddleware::class])->group(function(){
 
     ////// Route for Patient registration request 
     Route::post('/user/add-patient-request', [PatientRegRequestController::class, 'addPatientRequest']);
     Route::get('/user/fetch-all-patient/', [PatientRegRequestController::class, 'fetchAllPatient']);
-
-
 
 
 
@@ -234,5 +230,29 @@ Route::middleware(['auth:sanctum', UserMiddleware::class])->group(function(){
 
 
 });
+
+
+
+
+
+// - // working with Lab protected routes // - //
+Route::middleware(['auth:sanctum', LabMiddleware::class])->group(function(){
+
+    Route::get('lab/test', [FakeDataController::class, 'testLabMiddleware']);
+
+});
+
+
+// - // working with Hospital protected routes // - //
+Route::middleware(['auth:sanctum', HospitalMiddleware::class])->group(function(){
+    
+    Route::get('hospital/test', [FakeDataController::class, 'testHospitalMiddleware']);
+
+});
+
+
+
+
+
 
 

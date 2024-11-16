@@ -22,4 +22,15 @@ class FakeDataController extends Controller
             'listData' => $data,
          ]);
     }
+
+
+
+    public function testLabMiddleware(){
+        return response()->json('working lab middleware');
+    }
+
+
+    public function testHospitalMiddleware(){
+        return response()->json('working hospital middleware');
+    }
 }
