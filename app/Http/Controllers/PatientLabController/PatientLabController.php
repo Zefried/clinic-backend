@@ -4,7 +4,9 @@ namespace App\Http\Controllers\patientLabController;
 
 use App\Http\Controllers\Controller;
 use App\Models\LabModel;
+use App\Models\Patient_location_Count;
 use App\Models\PatientAssignedData;
+use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -84,6 +86,44 @@ class PatientLabController extends Controller
             ]);
         }
     }
+
+
+    public function fetchAssignedPatientLabById($id) {
+        try {
+            // Fetch patient location count data by patient ID
+            $carData = Patient_location_Count::where('patient_id', $id)->first();
+        
+            // Fetch patient assigned data by patient ID
+            $assignedData = PatientAssignedData::where('patient_id', $id)->first();
+
+            $refName = User::where('id', $assignedData->associated_sewek_id)->pluck('name');
+        
+            // Check if either of the data is not found
+            if (!$carData || !$assignedData) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'Data not found',
+                ]);
+            }
+        
+            // Return both data in the response
+            return response()->json([
+                'status' => 200,
+                'patient_card_data' => $carData,
+                'assigned_patient_data' => $assignedData,
+                'refName' => $refName, 
+                'message' => 'Data fetched successfully',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Failed to fetch data',
+                'error' => $e->getMessage(),
+            ]);
+        }
+        
+    }
+
     
 
 }

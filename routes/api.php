@@ -242,6 +242,13 @@ Route::middleware(['auth:sanctum', LabMiddleware::class])->group(function(){
     Route::get('lab/test', [FakeDataController::class, 'testLabMiddleware']);
     Route::get('lab/fetch-assigned-patient-lab', [PatientLabController::class, 'fetchAssignedPatientLab']);
     Route::get('lab/search-assigned-patient-lab', [PatientLabController::class, 'searchAssignedPatientLab']);
+
+    // fetching for assigned patient data by id 
+    Route::get('lab/fetch-assigned-patient-by-id/{id}', [PatientLabController::class, 'fetchAssignedPatientLabById']);
+
+
+
+
 });
 
 
