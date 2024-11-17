@@ -77,13 +77,31 @@ class PatientLabController extends Controller
 
     public function searchAssignedPatientLab(Request $request) {
 
+     
+        $userData = $request->user();
+    
+        // Fetch the lab associated with the user
+        $labModel = LabModel::where('user_id', $userData->id)->first();
+    
+        // Ensure the lab exists before proceeding
+        if (!$labModel) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Lab not found for this user.',
+            ]);
+        }
+    
+        // Getting the lab_id from the lab model
+        $labId = $labModel->id;
+    
+        // Get the search query and paid filter
         $query = $request->input('query');
         $isPaid = $request->input('paid', 'false') === 'true'; // Check if 'paid' is true
-       
-
+    
         try {
-            // Build the query dynamically
+            // Build the query to filter patients by lab_id and other search conditions
             $patientQuery = PatientAssignedData::where('disable_status', '!=', '1')
+                                               ->where('lab_id', $labId)  // Ensure only the current user's lab patients are returned
                                                ->where(function ($subQuery) use ($query) {
                                                    $subQuery->where('patient_name', 'like', '%' . $query . '%')
                                                             ->orWhere('lab_name', 'like', '%' . $query . '%')
@@ -111,11 +129,14 @@ class PatientLabController extends Controller
                 ]);
             }
     
+            // Return the search results as a JSON response
             return response()->json([
                 'status' => 200,
                 'suggestions' => $results,
             ]);
+    
         } catch (Exception $e) {
+            // Handle errors and return a database error response
             return response()->json([
                 'status' => 500,
                 'error' => 'Database error: ' . $e->getMessage(),
