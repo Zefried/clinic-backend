@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('patient_locations', function (Blueprint $table) {
             $table->id();
             $table->string('location_name')->nullable()->index();
-            $table->string('disable_status')->nullable()->default(false);             
+            $table->string('disable_status')->default(false);             
             $table->timestamps();
         });
     }

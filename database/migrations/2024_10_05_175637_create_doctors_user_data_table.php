@@ -37,7 +37,7 @@ return new class extends Migration
             $table->string('unique_user_id')->unique()->nullable(); // Unique user ID
             $table->string('account_request')->nullable()->default(false); // Default designation is 'doctor'
             $table->string('disable_status')->nullable()->default(false); // Default status is 'false'
-
+            $table->string('T&C')->nullable();
 
             // Adding indexes for performance
             $table->index('email'); // Index for email

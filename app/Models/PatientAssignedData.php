@@ -11,6 +11,7 @@ class PatientAssignedData extends Model
 
     protected $fillable = [
         'patient_id',
+        'patient_status',
         'patient_name',
         'lab_id',
         'lab_name',
@@ -23,6 +24,7 @@ class PatientAssignedData extends Model
         'doc_path',
         'test_ids',
         'visit',
+        'final_amount',
     ];
 
 

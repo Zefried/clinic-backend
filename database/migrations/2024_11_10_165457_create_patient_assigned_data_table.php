@@ -20,13 +20,15 @@ return new class extends Migration
             $table->string('lab_name')->nullable()->index();
             $table->unsignedBigInteger('employee_id')->nullable();
             $table->string('employee_name')->nullable()->index();
+            $table->decimal('final_amount', 10, 2)->nullable();
             $table->decimal('discount', 8, 2)->nullable();
             $table->decimal('final_discount', 8, 2)->nullable();
             $table->unsignedBigInteger('associated_sewek_id')->nullable()->index();
-            $table->string('disable_status')->nullable()->default(false);
+            $table->string('disable_status')->default(false);
             $table->string('doc_path')->nullable();
             $table->json('test_ids')->nullable();
             $table->integer('visit')->default(0);
+            $table->string('patient_status')->default('pending');
             $table->timestamps();
             
           

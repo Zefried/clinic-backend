@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\patientLabController;
 
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Controller;
 use App\Models\LabModel;
 use App\Models\Patient_location_Count;
@@ -9,6 +10,7 @@ use App\Models\PatientAssignedData;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class PatientLabController extends Controller
 {
@@ -17,25 +19,34 @@ class PatientLabController extends Controller
     public function fetchAssignedPatientLab(Request $request) {
 
         $user = $request->user();
-
         $labData = LabModel::where('user_id', $user->id)->first();
-
+    
         if (!$labData) {
             return response()->json([
                 'status' => 204,
                 'message' => 'No lab data found',
             ]);
         }
-
+    
+        // Start the query with common conditions
         $query = PatientAssignedData::where('disable_status', '!=', '1')
             ->where('lab_id', $labData->id);
-
+    
+        // Check if the 'paid' parameter is present in the request
+        if ($request->has('paid')) {
+            // Fetch paid patients
+            $query->where('patient_status', 'paid');
+        } else {
+            // Fetch pending (non-paid) patients
+            $query->where('patient_status', '!=', 'paid');
+        }
+    
         $recordsPerPage = $request->input('recordsPerPage', 10);  // Default to 10
         $page = $request->input('page', 1);
-
+    
         try {
             $listData = $query->paginate($recordsPerPage, ['*'], 'page', $page);
-
+    
             return response()->json([
                 'status' => 200,
                 'listData' => $listData->items(),
@@ -53,26 +64,44 @@ class PatientLabController extends Controller
             ]);
         }
     }
+    
 
 
     public function searchAssignedPatientLab(Request $request) {
+
         $query = $request->input('query');
-    
-        // Early return for empty queries
-        if (empty($query)) {
-            return response()->json(['results' => []]);
-        }
-    
+        $isPaid = $request->input('paid', 'false') === 'true'; // Check if 'paid' is true
+       
+
         try {
-            $results = PatientAssignedData::where('disable_status', '!=', '1')
-                // ->where('assignment_status', '=', 'assigned') // Filter for assigned patients
-                ->where(function ($subQuery) use ($query) {
-                    $subQuery->where('patient_name', 'like', '%' . $query . '%')
-                             ->orWhere('lab_name', 'like', '%' . $query . '%')
-                             ->orWhere('employee_name', 'like', '%' . $query . '%');
-                })
-                ->take(10) // Limit results to 10
-                ->get(['patient_id', 'patient_name', 'lab_id', 'lab_name', 'employee_name', 'employee_id', 'test_ids']); // Retrieve only relevant fields
+            // Build the query dynamically
+            $patientQuery = PatientAssignedData::where('disable_status', '!=', '1')
+                                               ->where(function ($subQuery) use ($query) {
+                                                   $subQuery->where('patient_name', 'like', '%' . $query . '%')
+                                                            ->orWhere('lab_name', 'like', '%' . $query . '%')
+                                                            ->orWhere('employee_name', 'like', '%' . $query . '%');
+                                               });
+    
+            // Apply the 'paid' or 'pending' filter
+            if ($isPaid) {
+                $patientQuery->where('patient_status', 'paid');
+            } else {
+                $patientQuery->where('patient_status', '!=', 'paid');
+            }
+    
+            // Retrieve the results with a limit of 10
+            $results = $patientQuery->take(10)
+                                    ->get(['patient_id', 'patient_name', 'lab_id', 'lab_name', 'employee_name', 'employee_id', 'test_ids']);
+    
+            // If no results are found, return an error message
+            if ($results->isEmpty()) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'No results found for your query.',
+                    'query' => $query,
+                    'paid' => $isPaid,
+                ]);
+            }
     
             return response()->json([
                 'status' => 200,
@@ -86,6 +115,7 @@ class PatientLabController extends Controller
             ]);
         }
     }
+    
 
 
     public function fetchAssignedPatientLabById($id) {
@@ -123,6 +153,82 @@ class PatientLabController extends Controller
         }
         
     }
+
+
+    /// this function is to handle final submission of patient visit status by lab
+    public function submitAssignedPatientDataById($id, Request $request) {
+        $patientData = PatientAssignedData::find($id);
+    
+        // Validate the file input (adjust as needed)
+        $validator = Validator::make($request->all(), [
+            'final_amount' => 'required|numeric',
+            'final_discount' => 'numeric', 
+            'pdf_file' => 'nullable|file|mimes:pdf|max:10240', 
+            'file_type' => 'nullable|in:hospital,lab',
+        ]);
+    
+        if ($validator->fails()) {
+            return response()->json(['validation_error' => $validator->messages()], 400);
+        }
+    
+        try {
+            // Initialize the PDF path in case no file is uploaded
+            $docPath = null;
+    
+            // Determine the directory based on file type (hospital or lab)
+            $directory = $request->file_type == 'hospital' ? 'pdfs/hospitals' : 'pdfs/labs';
+            
+            // If the file is provided, first delete the existing file if it exists
+            if ($request->hasFile('pdf_file')) {
+                // Check if the current record has an existing doc file
+                if ($patientData->doc_path && Storage::exists('public/' . $patientData->doc_path)) {
+                    // Ensure the file is deleted correctly
+                    $deleted = Storage::delete('public/' . $patientData->doc_path);
+                    if (!$deleted) {
+                        return response()->json([
+                            'status' => 500,
+                            'message' => 'Failed to delete the existing document file.',
+                        ]);
+                    }
+                }
+    
+                // Store the new PDF file and get its path
+                $docPath = $request->file('pdf_file')->store($directory, 'public');
+            }
+    
+            // Update patient data
+            $update = $patientData->update([
+                'patient_status' => 'paid',
+                'final_amount' => $request->final_amount,
+                'final_discount' => $request->final_discount,
+                'doc_path' => $docPath, // Update the column name to 'doc_path'
+            ]);
+    
+            if ($update) {
+                return response()->json([
+                    'status' => 200,
+                    'message' => 'Patient data updated successfully',
+                    'doc_path' => $docPath,
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'Failed to update | Please check the fields or re-try | ensure pdf',
+                ]);
+            }
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Failed to update patient data',
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+    
+    
+    
+    
+    
 
     
 

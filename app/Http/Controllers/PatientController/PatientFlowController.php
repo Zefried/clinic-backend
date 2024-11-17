@@ -206,7 +206,7 @@ class PatientFlowController extends Controller
                 'discount' => $request->input('discount'),
                 'final_discount' => $request->input('final_discount'),
                 'associated_sewek_id' => $associated_user_id,
-                'disable_status' => $request->input('disable_status'),
+                'disable_status' => 0,
                 'doc_path' => $request->input('doc_path'),
                 'test_ids' => json_encode($request->input('test_ids')),  
                 'visit' => $request->input('visit'),
@@ -233,9 +233,13 @@ class PatientFlowController extends Controller
 
     public function updatePatientAssignedData($existingRecord, Request $request) {
         DB::beginTransaction();
-        
+    
         try {
-            // Update fields with new data from the request
+            // Increment the current visit count
+            $currentVisit = $existingRecord->visit;
+            $newVisit = $currentVisit + 1;
+    
+            // Update fields with new data from the request and the incremented visit count
             $existingRecord->update([
                 'patient_name' => $request->input('patient_name'),
                 'lab_id' => $request->input('lab_id'),
@@ -244,10 +248,10 @@ class PatientFlowController extends Controller
                 'employee_name' => $request->input('employee_name'),
                 'discount' => $request->input('discount'),
                 'final_discount' => $request->input('final_discount'),
-                'disable_status' => $request->input('disable_status'),
+                'disable_status' => 0,
                 'doc_path' => $request->input('doc_path'),
-                'test_ids' => json_encode($request->input('test_ids')),  
-                'visit' => $request->input('visit'),
+                'test_ids' => json_encode($request->input('test_ids')),
+                'visit' => $newVisit,
             ]);
     
             DB::commit();
@@ -267,6 +271,7 @@ class PatientFlowController extends Controller
             ]);
         }
     }
+    
     
 
 
