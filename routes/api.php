@@ -247,7 +247,8 @@ Route::middleware(['auth:sanctum', LabMiddleware::class])->group(function(){
     Route::get('lab/fetch-assigned-patient-by-id/{id}', [PatientLabController::class, 'fetchAssignedPatientLabById']);
     Route::post('lab/submit-assigned-patient-data-by/{id}', [PatientLabController::class, 'submitAssignedPatientDataById']);
 
-
+    //fetching all employee of the lab 
+    Route::get('lab/fetch-all-lab-employee', [PatientLabController::class, 'fetchAllLabEmployee']);
 
 });
 

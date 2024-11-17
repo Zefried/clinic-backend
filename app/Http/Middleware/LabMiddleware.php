@@ -20,7 +20,7 @@ class LabMiddleware
         // Check if the user is authenticated and has either 'user' or 'admin' role
         // User routes can be accessed through admin as well
         
-        if ($user && ($user->role === 'lab' || $user->role === 'admin')) {
+        if ($user && ($user->role === 'lab' || $user->role === 'admin' || $user->role === 'hospital')) {
             return $next($request);
         } else {
             return response()->json([

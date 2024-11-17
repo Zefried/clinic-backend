@@ -4,6 +4,7 @@ namespace App\Http\Controllers\patientLabController;
 
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Controller;
+use App\Models\Employee;
 use App\Models\LabModel;
 use App\Models\Patient_location_Count;
 use App\Models\PatientAssignedData;
@@ -12,12 +13,14 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
+use function PHPSTORM_META\map;
+
 class PatientLabController extends Controller
 {
     // this controller is only used for all the operations associated with patient and lab 
 
     public function fetchAssignedPatientLab(Request $request) {
-
+        
         $user = $request->user();
         $labData = LabModel::where('user_id', $user->id)->first();
     
@@ -31,6 +34,11 @@ class PatientLabController extends Controller
         // Start the query with common conditions
         $query = PatientAssignedData::where('disable_status', '!=', '1')
             ->where('lab_id', $labData->id);
+    
+        // Filter by employee ID if provided
+        if ($request->has('employee_id')) {
+            $query->where('employee_id', $request->input('employee_id'));
+        }
     
         // Check if the 'paid' parameter is present in the request
         if ($request->has('paid')) {
@@ -62,10 +70,10 @@ class PatientLabController extends Controller
                 'message' => 'Failed to fetch data',
                 'error' => $e->getMessage(),
             ]);
-        }
+        }  
     }
     
-
+    
 
     public function searchAssignedPatientLab(Request $request) {
 
@@ -224,6 +232,56 @@ class PatientLabController extends Controller
             ]);
         }
     }
+
+
+    // fetching all lab employee
+    public function fetchAllLabEmployee(Request $request) {
+        try {
+            $user = $request->user();
+
+          
+            if (!$user) {
+                return response()->json([
+                    'status' => 401,
+                    'message' => 'Unauthorized user.',
+                ]);
+            }
+
+            $labData = LabModel::where('user_id', $user->id)->first();
+
+       
+            if (!$labData) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'Lab not found for the user.',
+                ]);
+            }
+
+            $employeeData = Employee::where('lab_id', $labData->id)->get();
+
+       
+            if ($employeeData->isEmpty()) {
+                return response()->json([
+                    'status' => 204,
+                    'message' => 'No employees found for the lab.',
+                ]);
+            }
+
+            return response()->json([
+                'status' => 200,
+                'message' => $employeeData->count() . ' Employees fetched successfully.',
+                'data' => $employeeData,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 500,
+                'error' => $e->getMessage(),
+                'message' => 'Failed to fetch all employees.',
+            ]);
+        }
+    }
+
     
     
     
