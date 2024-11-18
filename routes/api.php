@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountRequestController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController\LabReportController;
 use App\Http\Controllers\EmployeeController\EmployeeController;
 use App\Http\Controllers\FakeDataController;
 use App\Http\Controllers\LabController;
@@ -249,6 +250,9 @@ Route::middleware(['auth:sanctum', LabMiddleware::class])->group(function(){
 
     //fetching all employee of the lab 
     Route::get('lab/fetch-all-lab-employee', [PatientLabController::class, 'fetchAllLabEmployee']);
+
+    // fetching the reports from both lab and hospital 
+    Route::get('lab/fetch-lab-report', [LabReportController::class, 'labDashboardReport']);
 
 });
 
