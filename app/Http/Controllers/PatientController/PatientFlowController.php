@@ -275,22 +275,28 @@ class PatientFlowController extends Controller
     
 
 
-    public function fetchAssignedPatient(Request $request)
-    {
+    public function fetchAssignedPatient(Request $request) {
+        
         try {
-
-            // Set default records per page or use query parameter value
+          
             $recordsPerPage = $request->query('recordsPerPage', 10);
     
-            // Fetch paginated data for assigned patients
-            $assignedPatientData = PatientAssignedData::where('disable_status', '!=', '1')
-                ->paginate($recordsPerPage);
+            
+            $query = PatientAssignedData::where('disable_status', '!=', '1');
+    
+            // Check if the 'paid' query parameter is provided and true
+            if ($request->query('paid') === 'true') {
+                $query->where('patient_status', 'paid');
+            }
+    
+            // Fetch paginated data
+            $assignedPatientData = $query->paginate($recordsPerPage);
     
             // Check if any data was found
             if ($assignedPatientData->isEmpty()) {
                 return response()->json([
                     'status' => 204,
-                    'message' => 'No assigned patient data found',
+                    'message' => 'No patient data found',
                 ]);
             }
     
@@ -298,22 +304,22 @@ class PatientFlowController extends Controller
             return response()->json([
                 'status' => 200,
                 'listData' => $assignedPatientData->items(),
-                'message' => 'Total assigned patient data found: ' . $assignedPatientData->total(),
+                'message' => 'Total patient data found: ' . $assignedPatientData->total(),
                 'total' => $assignedPatientData->total(),
                 'current_page' => $assignedPatientData->currentPage(),
                 'last_page' => $assignedPatientData->lastPage(),
                 'per_page' => $assignedPatientData->perPage(),
             ]);
-    
         } catch (Exception $e) {
             // Handle exceptions with a 500 status
             return response()->json([
                 'status' => 500,
-                'message' => 'Failed to fetch assigned patient data. Please check the console for errors.',
+                'message' => 'Failed to fetch patient data. Please check the console for errors.',
                 'error' => $e->getMessage(),
             ]);
         }
     }
+    
     
 
     public function searchPatientsByNameAndLocation(Request $request) {
